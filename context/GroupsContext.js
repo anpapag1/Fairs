@@ -1,0 +1,122 @@
+import React, { createContext, useState, useContext } from 'react';
+
+const GroupsContext = createContext();
+
+export const useGroups = () => {
+  const context = useContext(GroupsContext);
+  if (!context) {
+    throw new Error('useGroups must be used within a GroupsProvider');
+  }
+  return context;
+};
+
+export const GroupsProvider = ({ children }) => {
+  const [groups, setGroups] = useState([]);
+
+  const addGroup = (name, date) => {
+    const newGroup = {
+      id: Date.now().toString(),
+      name: name,
+      date: date,
+      items: [],
+      people: [],
+      tipValue: '',
+      tipMode: 'money',
+      splitMode: 'equal',
+    };
+    setGroups([...groups, newGroup]);
+    return newGroup;
+  };
+
+  const updateGroupItems = (groupId, items) => {
+    setGroups(groups.map(group => 
+      group.id === groupId 
+        ? { ...group, items }
+        : group
+    ));
+  };
+
+  const updateGroupTip = (groupId, tipValue, tipMode) => {
+    setGroups(groups.map(group => 
+      group.id === groupId 
+        ? { ...group, tipValue, tipMode }
+        : group
+    ));
+  };
+
+  const updateGroupPeople = (groupId, people) => {
+    setGroups(groups.map(group => 
+      group.id === groupId 
+        ? { ...group, people }
+        : group
+    ));
+  };
+
+  const updateGroupSplitMode = (groupId, splitMode) => {
+    setGroups(groups.map(group => 
+      group.id === groupId 
+        ? { ...group, splitMode }
+        : group
+    ));
+  };
+
+  const updateGroupName = (groupId, name) => {
+    setGroups(groups.map(group => 
+      group.id === groupId 
+        ? { ...group, name }
+        : group
+    ));
+  };
+
+  const deleteGroup = (groupId) => {
+    setGroups(groups.filter(group => group.id !== groupId));
+  };
+
+  const getGroup = (groupId) => {
+    return groups.find(group => group.id === groupId);
+  };
+
+  const calculateGroupTotal = (groupId) => {
+    const group = getGroup(groupId);
+    if (!group) return 0;
+
+    const subtotal = group.items.reduce((sum, item) => sum + parseFloat(item.price || 0), 0);
+    let tip = 0;
+    
+    if (group.tipValue && !isNaN(parseFloat(group.tipValue))) {
+      if (group.tipMode === 'percent') {
+        tip = (subtotal * parseFloat(group.tipValue)) / 100;
+      } else {
+        tip = parseFloat(group.tipValue);
+      }
+    }
+
+    return subtotal + tip;
+  };
+
+  const getGroupsWithTotals = () => {
+    return groups.map(group => ({
+      ...group,
+      total: calculateGroupTotal(group.id)
+    }));
+  };
+
+  const value = {
+    groups: getGroupsWithTotals(),
+    addGroup,
+    updateGroupItems,
+    updateGroupTip,
+    updateGroupPeople,
+    updateGroupSplitMode,
+    updateGroupName,
+    deleteGroup,
+    getGroup,
+    calculateGroupTotal,
+  };
+
+  return (
+    <GroupsContext.Provider value={value}>
+      {children}
+    </GroupsContext.Provider>
+  );
+};

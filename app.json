@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "fairs",
+    "name": "Fairs",
     "slug": "fairs",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,20 +10,26 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#FEF7FF"
     },
     "ios": {
       "supportsTablet": true
     },
     "android": {
+      "package": "com.fairs.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#FEF7FF"
       },
       "edgeToEdgeEnabled": true
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "c7d0e3d5-0e61-4d40-99db-34581977cd7a"
+      }
     }
   }
 }
