@@ -1,4 +1,7 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const CURRENCY_STORAGE_KEY = '@fairs_currency';
 
 const CURRENCIES = [
   { code: 'USD', symbol: '$', name: 'US Dollar' },
@@ -34,7 +37,32 @@ export const useCurrency = () => {
 };
 
 export const CurrencyProvider = ({ children }) => {
-  const [currencyCode, setCurrencyCode] = useState('EUR');
+  const [currencyCode, setCurrencyCodeState] = useState('EUR');
+
+  // Load currency on mount
+  useEffect(() => {
+    loadCurrency();
+  }, []);
+
+  const loadCurrency = async () => {
+    try {
+      const storedCurrency = await AsyncStorage.getItem(CURRENCY_STORAGE_KEY);
+      if (storedCurrency !== null) {
+        setCurrencyCodeState(storedCurrency);
+      }
+    } catch (error) {
+      console.error('Error loading currency:', error);
+    }
+  };
+
+  const setCurrencyCode = async (code) => {
+    try {
+      await AsyncStorage.setItem(CURRENCY_STORAGE_KEY, code);
+      setCurrencyCodeState(code);
+    } catch (error) {
+      console.error('Error saving currency:', error);
+    }
+  };
 
   const currentCurrency = CURRENCIES.find(c => c.code === currencyCode) || CURRENCIES[0];
 

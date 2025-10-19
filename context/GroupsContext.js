@@ -1,6 +1,9 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const GroupsContext = createContext();
+
+const STORAGE_KEY = '@fairs_groups';
 
 export const useGroups = () => {
   const context = useContext(GroupsContext);
@@ -12,6 +15,40 @@ export const useGroups = () => {
 
 export const GroupsProvider = ({ children }) => {
   const [groups, setGroups] = useState([]);
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  // Load groups from storage on mount
+  useEffect(() => {
+    loadGroups();
+  }, []);
+
+  // Save groups to storage whenever they change
+  useEffect(() => {
+    if (isLoaded) {
+      saveGroups();
+    }
+  }, [groups, isLoaded]);
+
+  const loadGroups = async () => {
+    try {
+      const storedGroups = await AsyncStorage.getItem(STORAGE_KEY);
+      if (storedGroups !== null) {
+        setGroups(JSON.parse(storedGroups));
+      }
+    } catch (error) {
+      console.error('Error loading groups:', error);
+    } finally {
+      setIsLoaded(true);
+    }
+  };
+
+  const saveGroups = async () => {
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(groups));
+    } catch (error) {
+      console.error('Error saving groups:', error);
+    }
+  };
 
   const addGroup = (name, date) => {
     const newGroup = {
