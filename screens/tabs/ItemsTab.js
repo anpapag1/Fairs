@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -28,8 +28,14 @@ export default function ItemsTab({ route }) {
   const [editingItem, setEditingItem] = useState(null);
   const [editItemName, setEditItemName] = useState('');
   const [editItemPrice, setEditItemPrice] = useState('');
+  const [multiplierModalVisible, setMultiplierModalVisible] = useState(false);
+  const [multiplierItem, setMultiplierItem] = useState(null);
+  const [multiplierValue, setMultiplierValue] = useState('');
   const [tipValue, setTipValue] = useState(currentGroup?.tipValue || '');
   const [tipMode, setTipMode] = useState(currentGroup?.tipMode || 'money');
+  
+  // Store refs for all swipeable items
+  const swipeableRefs = useRef({});
 
   // Update items in context whenever local items change
   useEffect(() => {
@@ -42,7 +48,10 @@ export default function ItemsTab({ route }) {
   }, [tipValue, tipMode]);
 
   const calculateSubtotal = () => {
-    return items.reduce((sum, item) => sum + parseFloat(item.price), 0);
+    return items.reduce((sum, item) => {
+      const multiplier = item.multiplier || 1;
+      return sum + (parseFloat(item.price) * multiplier);
+    }, 0);
   };
 
   const calculateTip = () => {
@@ -95,6 +104,61 @@ export default function ItemsTab({ route }) {
     }
   };
 
+  const openMultiplierModal = (item) => {
+    setMultiplierItem(item);
+    setMultiplierValue(String(item.multiplier || 1));
+    setMultiplierModalVisible(true);
+  };
+
+  const saveMultiplier = () => {
+    if (multiplierValue.trim() && !isNaN(parseInt(multiplierValue)) && parseInt(multiplierValue) > 0) {
+      setItems(items.map(item => 
+        item.id === multiplierItem.id 
+          ? { ...item, multiplier: parseInt(multiplierValue) }
+          : item
+      ));
+      setMultiplierItem(null);
+      setMultiplierValue('');
+      setMultiplierModalVisible(false);
+    }
+  };
+
+  const renderLeftActions = (item, progress, dragX) => {
+    const translateX = progress.interpolate({
+      inputRange: [0, 1],
+      outputRange: [-85, 0],
+    });
+
+    const opacity = progress.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 1],
+    });
+
+    return (
+      <Animated.View 
+        style={[
+          styles.swipeLeftActionsContainer,
+          { 
+            transform: [{ translateX }],
+            opacity 
+          }
+        ]}
+      >
+        <TouchableOpacity
+          style={[styles.swipeAction, { backgroundColor: theme.success }]}
+          onPress={() => {
+            openMultiplierModal(item);
+            swipeableRefs.current[item.id]?.close();
+          }}
+          activeOpacity={0.9}
+        >
+          <Text style={[styles.swipeActionIcon, { color: theme.onSuccess }]}>×{item.multiplier || 1}</Text>
+          {/* <Text style={[styles.swipeActionText, { color: theme.onSuccess }]}>Multiply</Text> */}
+        </TouchableOpacity>
+      </Animated.View>
+    );
+  };
+
   const renderRightActions = (item, progress, dragX) => {
     const translateX = progress.interpolate({
       inputRange: [0, 1],
@@ -118,7 +182,10 @@ export default function ItemsTab({ route }) {
       >
       <TouchableOpacity
         style={[styles.swipeAction, styles.editAction, { backgroundColor: theme.primary }]}
-        onPress={() => openEditItem(item)}
+        onPress={() => {
+          openEditItem(item);
+          swipeableRefs.current[item.id]?.close();
+        }}
         activeOpacity={0.9}
       >
         <Text style={[styles.swipeActionIcon, { color: theme.onPrimary }]}>✎</Text>
@@ -127,7 +194,10 @@ export default function ItemsTab({ route }) {
       
       <TouchableOpacity
         style={[styles.swipeAction, styles.deleteAction, { backgroundColor: theme.warningContainer }]}
-        onPress={() => deleteItem(item.id)}
+        onPress={() => {
+          deleteItem(item.id);
+          swipeableRefs.current[item.id]?.close();
+        }}
         activeOpacity={0.9}
       >
         <Text style={[styles.swipeActionIcon, { color: theme.onWarning }]}>×</Text>
@@ -139,16 +209,27 @@ export default function ItemsTab({ route }) {
 
   const renderItem = ({ item, index }) => (
     <Swipeable
+      ref={(ref) => { swipeableRefs.current[item.id] = ref; }}
+      renderLeftActions={(progress, dragX) => renderLeftActions(item, progress, dragX)}
       renderRightActions={(progress, dragX) => renderRightActions(item, progress, dragX)}
+      overshootLeft={false}
       overshootRight={false}
       friction={2}
+      leftThreshold={40}
       rightThreshold={40}
       containerStyle={styles.swipeableContainer}
     >
       <View style={[styles.itemRow, { backgroundColor: theme.surface }]}>
         <Text style={[styles.itemNumber, { color: theme.textSecondary }]}>{index + 1}</Text>
-        <Text style={[styles.itemName, { color: theme.textPrimary }]}>{item.name}</Text>
-        <Text style={[styles.itemPrice, { color: theme.textPrimary }]}>{currencySymbol}{parseFloat(item.price).toFixed(2)}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+          {item.multiplier && item.multiplier > 1 && (
+            <Text style={[styles.itemMultiplier, { color: theme.primary }]}>{item.multiplier}×</Text>
+          )}
+          <Text style={[styles.itemName, { color: theme.textPrimary }]}>{item.name}</Text>
+        </View>
+        <Text style={[styles.itemPrice, { color: theme.textPrimary }]}>
+          {currencySymbol}{(parseFloat(item.price) * (item.multiplier || 1)).toFixed(2)}
+        </Text>
       </View>
     </Swipeable>
   );
@@ -200,7 +281,7 @@ export default function ItemsTab({ route }) {
           </View>
           
           <View style={styles.totalRow}>
-            <Text style={[styles.totalLabel, { color: theme.textSecondary }]}>Total:</Text>
+            <Text style={[styles.totalLabel, { color: theme.textPrimary }]}>Total:</Text>
             <Text style={[styles.totalAmount, { color: theme.primary }]}>{currencySymbol}{calculateTotal().toFixed(2)}</Text>
           </View>
         </View>
@@ -219,7 +300,7 @@ export default function ItemsTab({ route }) {
 
             <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Item Name</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surface, color: theme.textPrimary }]}
+              style={[styles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
               placeholder="e.g., Pizza"
               placeholderTextColor={theme.textSecondary}
               value={newItemName}
@@ -229,7 +310,7 @@ export default function ItemsTab({ route }) {
             
             <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Price</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surface, color: theme.textPrimary }]}
+              style={[styles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
               placeholder="0.00"
               placeholderTextColor={theme.textSecondary}
               keyboardType="decimal-pad"
@@ -276,7 +357,7 @@ export default function ItemsTab({ route }) {
 
             <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Item Name</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surface, color: theme.textPrimary }]}
+              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
               placeholder="e.g., Pizza"
               placeholderTextColor={theme.textSecondary}
               value={editItemName}
@@ -286,7 +367,7 @@ export default function ItemsTab({ route }) {
 
             <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Price</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surface, color: theme.textPrimary }]}
+              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
               placeholder="0.00"
               placeholderTextColor={theme.textSecondary}
               keyboardType="decimal-pad"
@@ -308,6 +389,73 @@ export default function ItemsTab({ route }) {
               <TouchableOpacity
                 style={[styles.modalButton, styles.createButton, { backgroundColor: theme.primary }]}
                 onPress={saveEditItem}
+              >
+                <Text style={[styles.createButtonText, { color: theme.onPrimary }]}>Save</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Multiplier Modal */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={multiplierModalVisible}
+        onRequestClose={() => {
+          setMultiplierModalVisible(false);
+          setMultiplierItem(null);
+          setMultiplierValue('');
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]}>
+            <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Set Quantity</Text>
+
+            <View style={styles.counterContainer}>
+              <TouchableOpacity
+                style={[styles.counterButton, { backgroundColor: theme.surfaceVariant, borderColor: theme.outline }]}
+                onPress={() => {
+                  const currentValue = parseInt(multiplierValue) || 1;
+                  if (currentValue > 1) {
+                    setMultiplierValue(String(currentValue - 1));
+                  }
+                }}
+              >
+                <Text style={[styles.counterButtonText, { color: theme.textPrimary }]}>−</Text>
+              </TouchableOpacity>
+
+              <View style={[styles.counterDisplay, { backgroundColor: theme.primaryContainer }]}>
+                <Text style={[styles.counterDisplayText, { color: theme.primary }]}>
+                  {multiplierValue || '1'}
+                </Text>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.counterButton, { backgroundColor: theme.surfaceVariant, borderColor: theme.outline }]}
+                onPress={() => {
+                  const currentValue = parseInt(multiplierValue) || 1;
+                  setMultiplierValue(String(currentValue + 1));
+                }}
+              >
+                <Text style={[styles.counterButtonText, { color: theme.textPrimary }]}>+</Text>
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.surfaceVariant }]}
+                onPress={() => {
+                  setMultiplierModalVisible(false);
+                  setMultiplierItem(null);
+                  setMultiplierValue('');
+                }}
+              >
+                <Text style={[styles.cancelButtonText, { color: theme.primary }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.createButton, { backgroundColor: theme.primary }]}
+                onPress={saveMultiplier}
               >
                 <Text style={[styles.createButtonText, { color: theme.onPrimary }]}>Save</Text>
               </TouchableOpacity>
@@ -398,10 +546,15 @@ const styles = StyleSheet.create({
   },
   itemName: {
     fontFamily: 'Ysabeau-Regular',
-    flex: 1,
     fontSize: 16,
     color: '#1C1B1F',
     fontWeight: '400',
+  },
+  itemMultiplier: {
+    fontFamily: 'Ysabeau-Bold',
+    fontSize: 16,
+    fontWeight: '700',
+    marginRight: 4,
   },
   itemPrice: {
     fontFamily: 'Ysabeau-SemiBold',
@@ -581,8 +734,6 @@ const styles = StyleSheet.create({
   },
   input: {
     fontFamily: 'Ysabeau-Regular',
-    borderWidth: 1,
-    borderColor: '#79747E',
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
@@ -622,8 +773,48 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     letterSpacing: 0.5,
   },
+  counterContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    marginTop: 8,
+    marginBottom: 24,
+  },
+  counterButton: {
+    width: '33%',
+    height: 54,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+  },
+  counterButtonText: {
+    fontFamily: 'Ysabeau-Bold',
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  counterDisplay: {
+    minWidth: 60,
+    height: 54,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  counterDisplayText: {
+    fontFamily: 'Ysabeau-Bold',
+    fontSize: 24,
+    fontWeight: '700',
+  },
   swipeableContainer: {
     marginBottom: 0,
+  },
+  swipeLeftActionsContainer: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    height: '100%',
+    padding: 4,
   },
   swipeActionsContainer: {
     flexDirection: 'row',
@@ -638,6 +829,7 @@ const styles = StyleSheet.create({
     height: '100%',
     marginRight: 4,
     borderRadius: 16,
+    padding: 14,
   },
   editAction: {
     backgroundColor: '#6750A4',
@@ -650,7 +842,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '400',
     color: '#FFFFFF',
-    marginBottom: 4,
   },
   swipeActionText: {
     fontFamily: 'Ysabeau-SemiBold',

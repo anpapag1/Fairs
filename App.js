@@ -85,7 +85,12 @@ function ThemedApp() {
   });
 
   useEffect(() => {
-    if (fontsLoaded || fontError) {
+    if (fontsLoaded) {
+      console.log('✅ Fonts loaded successfully!');
+      SplashScreen.hideAsync();
+    }
+    if (fontError) {
+      console.error('❌ Font loading error:', fontError);
       SplashScreen.hideAsync();
     }
   }, [fontsLoaded, fontError]);

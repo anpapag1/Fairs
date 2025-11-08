@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -31,6 +31,9 @@ export default function PeopleTab({ route }) {
   const [itemSelectionModalVisible, setItemSelectionModalVisible] = useState(false);
   const [editingPerson, setEditingPerson] = useState(null);
   const [editPersonName, setEditPersonName] = useState('');
+  
+  // Store refs for all swipeable items
+  const swipeableRefs = useRef({});
   
   const total = calculateGroupTotal(group.id);
   const items = currentGroup?.items || [];
@@ -148,7 +151,11 @@ export default function PeopleTab({ route }) {
     person.selectedItems.forEach(itemId => {
       if (itemId === 'tip') {
         // Handle tip
-        const subtotal = items.reduce((sum, item) => sum + parseFloat(item.price || 0), 0);
+        const subtotal = items.reduce((sum, item) => {
+          const price = parseFloat(item.price || 0);
+          const multiplier = item.multiplier || 1;
+          return sum + (price * multiplier);
+        }, 0);
         let tipAmount = 0;
         if (tipValue && !isNaN(parseFloat(tipValue))) {
           if (tipMode === 'percent') {
@@ -169,7 +176,8 @@ export default function PeopleTab({ route }) {
           // Count how many people share this item
           const peopleWithItem = people.filter(p => p.selectedItems.includes(itemId)).length;
           if (peopleWithItem > 0) {
-            amount += parseFloat(item.price) / peopleWithItem;
+            const itemPrice = parseFloat(item.price) * (item.multiplier || 1);
+            amount += itemPrice / peopleWithItem;
           }
         }
       }
@@ -222,22 +230,35 @@ export default function PeopleTab({ route }) {
       outputRange: [-85, 0],
     });
 
+    const opacity = progress.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 1],
+    });
+
     return (
       <Animated.View 
         style={[
           styles.swipeLeftActionsContainer,
-          { transform: [{ translateX }] }
+          { 
+            transform: [{ translateX }],
+            opacity 
+          }
         ]}
       >
         <TouchableOpacity
           style={[styles.swipeAction, { backgroundColor: item.isPaid ? theme.warning : theme.success }]}
           onPress={() => {
             togglePersonPaid(item.id);
+            swipeableRefs.current[item.id]?.close();
           }}
           activeOpacity={0.9}
         >
-          <Text style={styles.swipeActionIcon}>{item.isPaid ? '↶' : '✓'}</Text>
-          <Text style={styles.swipeActionText}>{item.isPaid ? 'Unpaid' : 'Paid'}</Text>
+          <Text style={[styles.swipeActionIcon, { color: theme.onSuccess }]}>
+            {item.isPaid ? '↶' : '✓'}
+          </Text>
+          <Text style={[styles.swipeActionText, { color: theme.onSuccess }]}>
+            {item.isPaid ? 'Unpaid' : 'Paid'}
+          </Text>
         </TouchableOpacity>
       </Animated.View>
     );
@@ -249,28 +270,38 @@ export default function PeopleTab({ route }) {
       outputRange: [160, 0],
     });
 
+    const opacity = progress.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 1],
+    });
+
     return (
       <Animated.View 
         style={[
           styles.swipeActionsContainer,
-          { transform: [{ translateX }] }
+          { 
+            transform: [{ translateX }],
+            opacity 
+          }
         ]}
       >
         <TouchableOpacity
           style={[styles.swipeAction, { backgroundColor: theme.primary }]}
           onPress={() => {
             openEditPerson(item);
+            swipeableRefs.current[item.id]?.close();
           }}
           activeOpacity={0.9}
         >
-          <Text style={styles.swipeActionIcon}>✎</Text>
-          <Text style={styles.swipeActionText}>Edit</Text>
+          <Text style={[styles.swipeActionIcon, { color: theme.onPrimary }]}>✎</Text>
+          <Text style={[styles.swipeActionText, { color: theme.onPrimary }]}>Edit</Text>
         </TouchableOpacity>
         
         <TouchableOpacity
           style={[styles.swipeAction, { backgroundColor: theme.warningContainer }]}
           onPress={() => {
             deletePerson(item.id);
+            swipeableRefs.current[item.id]?.close();
           }}
           activeOpacity={0.9}
         >
@@ -287,6 +318,7 @@ export default function PeopleTab({ route }) {
     
     return (
       <Swipeable
+      ref={(ref) => { swipeableRefs.current[item.id] = ref; }}
       renderLeftActions={(progress, dragX) => renderLeftActions(item, progress, dragX)}
       renderRightActions={(progress, dragX) => renderRightActions(item, progress, dragX)}
       overshootLeft={false}
@@ -362,8 +394,9 @@ export default function PeopleTab({ route }) {
         }
       }
     } else {
-      itemName = item.name;
-      itemPrice = parseFloat(item.price);
+      const multiplier = item.multiplier || 1;
+      itemName = multiplier > 1 ? `${item.name} (×${multiplier})` : item.name;
+      itemPrice = parseFloat(item.price) * multiplier;
     }
     
     return (
@@ -538,7 +571,7 @@ export default function PeopleTab({ route }) {
             
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { borderColor: theme.outline }]}
+                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.surfaceVariant }]}
                 onPress={() => {
                   setModalVisible(false);
                   setNewPersonName('');
@@ -583,7 +616,7 @@ export default function PeopleTab({ route }) {
             
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { borderColor: theme.outline }]}
+                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.surfaceVariant }]}
                 onPress={() => {
                   setEditingPerson(null);
                   setEditPersonName('');

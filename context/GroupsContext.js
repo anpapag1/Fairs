@@ -118,7 +118,11 @@ export const GroupsProvider = ({ children }) => {
     const group = getGroup(groupId);
     if (!group) return 0;
 
-    const subtotal = group.items.reduce((sum, item) => sum + parseFloat(item.price || 0), 0);
+    const subtotal = group.items.reduce((sum, item) => {
+      const price = parseFloat(item.price || 0);
+      const multiplier = item.multiplier || 1;
+      return sum + (price * multiplier);
+    }, 0);
     let tip = 0;
     
     if (group.tipValue && !isNaN(parseFloat(group.tipValue))) {

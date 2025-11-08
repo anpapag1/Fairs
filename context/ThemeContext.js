@@ -30,11 +30,11 @@ export const lightTheme = {
   onBackground: '#1C1B1F',
   
   // Surface
-  surface: '#c9bdc9',
+  surface: '#dbc4eeff',
   onSurface: '#000000ff',
   surfaceVariant: '#d6bcffff',
   onSurfaceVariant: '#0000007c',
-  surfaceContainer: '#c9bdc9',
+  surfaceContainer: '#dbc4eeff',
   surfaceContainerHigh: '#00000030',
   
   // Outline
@@ -95,7 +95,7 @@ export const darkTheme = {
 
 export function ThemeProvider({ children }) {
   const systemColorScheme = useColorScheme();
-  const [themeMode, setThemeMode] = useState('light'); // 'light' or 'dark'
+  const [themeMode, setThemeMode] = useState('system'); // 'light', 'dark', or 'system'
   
   // Load theme preference on mount
   useEffect(() => {
@@ -123,11 +123,14 @@ export function ThemeProvider({ children }) {
   };
   
   const getActiveTheme = () => {
-    return themeMode === 'dark' ? darkTheme : lightTheme;
+    // If system mode, use the system's color scheme
+    const effectiveMode = themeMode === 'system' ? systemColorScheme : themeMode;
+    return effectiveMode === 'dark' ? darkTheme : lightTheme;
   };
   
   const isDark = () => {
-    return themeMode === 'dark';
+    const effectiveMode = themeMode === 'system' ? systemColorScheme : themeMode;
+    return effectiveMode === 'dark';
   };
 
   const value = {

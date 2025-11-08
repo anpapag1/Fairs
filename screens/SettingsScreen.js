@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Picker } from '@react-native-picker/picker';
+import { Ionicons } from '@expo/vector-icons';
 import { useCurrency } from '../context/CurrencyContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -43,13 +44,14 @@ export default function SettingsScreen({ navigation }) {
               ]}
               onPress={() => setThemeMode('light')}
             >
-              <Text style={[
-                styles.themeOptionIcon,
-                themeMode === 'light' && { color: theme.primary }
-              ]}>☀️</Text>
+              <Ionicons 
+                name="sunny" 
+                size={28} 
+                color={themeMode === 'light' ? theme.primary : theme.textSecondary}
+              />
               <Text style={[
                 styles.themeOptionText,
-                { color: theme.textPrimary },
+                { color: theme.textSecondary },
                 themeMode === 'light' && { color: theme.primary, fontWeight: '700', fontFamily: 'Ysabeau-Bold' }
               ]}>Light</Text>
             </TouchableOpacity>
@@ -62,15 +64,36 @@ export default function SettingsScreen({ navigation }) {
               ]}
               onPress={() => setThemeMode('dark')}
             >
-              <Text style={[
-                styles.themeOptionIcon,
-                themeMode === 'dark' && { color: theme.primary }
-              ]}>🌙</Text>
+              <Ionicons 
+                name="moon" 
+                size={28} 
+                color={themeMode === 'dark' ? theme.primary : theme.textSecondary}
+              />
               <Text style={[
                 styles.themeOptionText,
-                { color: theme.textPrimary },
+                { color: theme.textSecondary },
                 themeMode === 'dark' && { color: theme.primary, fontWeight: '700', fontFamily: 'Ysabeau-Bold' }
               ]}>Dark</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.themeOption,
+                { borderColor: theme.outline },
+                themeMode === 'system' && { backgroundColor: theme.primaryContainer, borderColor: theme.primary }
+              ]}
+              onPress={() => setThemeMode('system')}
+            >
+              <Ionicons 
+                name="phone-portrait-outline" 
+                size={28} 
+                color={themeMode === 'system' ? theme.primary : theme.textSecondary}
+              />
+              <Text style={[
+                styles.themeOptionText,
+                { color: theme.textSecondary },
+                themeMode === 'system' && { color: theme.primary, fontWeight: '700', fontFamily: 'Ysabeau-Bold' }
+              ]}>System</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -189,15 +212,12 @@ const styles = StyleSheet.create({
   themeOption: {
     flex: 1,
     padding: 16,
+    paddingVertical: 20,
     borderWidth: 2,
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  themeOptionIcon: {
-    fontFamily: 'Ysabeau-Regular',
-    fontSize: 32,
-    marginBottom: 8,
+    gap: 8,
   },
   themeOptionText: {
     fontFamily: 'Ysabeau-Regular',

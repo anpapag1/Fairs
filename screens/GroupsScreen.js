@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -47,6 +47,9 @@ export default function GroupsScreen({ navigation }) {
   const [editingGroup, setEditingGroup] = useState(null);
   const [editGroupName, setEditGroupName] = useState('');
   const [editGroupEmoji, setEditGroupEmoji] = useState('beer');
+  
+  // Store refs for all swipeable items
+  const swipeableRefs = useRef({});
 
   const addNewGroup = () => {
     if (newGroupName.trim()) {
@@ -84,16 +87,27 @@ export default function GroupsScreen({ navigation }) {
       outputRange: [160, 0],
     });
 
+    const opacity = progress.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 1],
+    });
+
     return (
       <Animated.View 
         style={[
           styles.swipeActionsContainer,
-          { transform: [{ translateX }] }
+          { 
+            transform: [{ translateX }],
+            opacity 
+          }
         ]}
       >
         <TouchableOpacity
           style={[styles.swipeAction, styles.editAction, { backgroundColor: theme.primary }]}
-          onPress={() => openEditGroup(item)}
+          onPress={() => {
+            openEditGroup(item);
+            swipeableRefs.current[item.id]?.close();
+          }}
           activeOpacity={0.9}
         >
           <Text style={[styles.swipeActionIcon, { color: theme.onPrimary }]}>✎</Text>
@@ -102,7 +116,10 @@ export default function GroupsScreen({ navigation }) {
         
         <TouchableOpacity
           style={[styles.swipeAction, styles.deleteAction, { backgroundColor: theme.warningContainer }]}
-          onPress={() => deleteGroup(item.id)}
+          onPress={() => {
+            deleteGroup(item.id);
+            swipeableRefs.current[item.id]?.close();
+          }}
           activeOpacity={0.9}
         >
           <Text style={[styles.swipeActionIcon, { color: theme.onWarning }]}>×</Text>
@@ -114,6 +131,7 @@ export default function GroupsScreen({ navigation }) {
 
   const renderGroup = ({ item }) => (
     <Swipeable
+      ref={(ref) => { swipeableRefs.current[item.id] = ref; }}
       renderRightActions={(progress, dragX) => renderRightActions(item, progress, dragX)}
       overshootRight={false}
       friction={2}
@@ -135,8 +153,21 @@ export default function GroupsScreen({ navigation }) {
             {item.people && item.people.length > 0 && (
               <View style={styles.peoplePills}>
                 {item.people.map((person) => (
-                  <View key={person.id} style={[styles.personPill, { backgroundColor: theme.surfaceContainerHigh }]}>
-                    <Text style={[styles.personPillText, { color: theme.textSecondary }]}>{person.name}</Text>
+                  <View 
+                    key={person.id} 
+                    style={[
+                      styles.personPill, 
+                      { backgroundColor: person.isPaid ? theme.successContainer : theme.surfaceContainerHigh }
+                    ]}
+                  >
+                    <Text 
+                      style={[
+                        styles.personPillText, 
+                        { color: person.isPaid ? theme.onSuccessContainer : theme.textSecondary }
+                      ]}
+                    >
+                      {person.name}
+                    </Text>
                   </View>
                 ))}
               </View>
@@ -208,7 +239,7 @@ export default function GroupsScreen({ navigation }) {
 
             <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Group Name</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surface, color: theme.textPrimary }]}
+              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
               placeholder="Group name"
               placeholderTextColor={theme.textSecondary}
               value={newGroupName}
@@ -217,7 +248,7 @@ export default function GroupsScreen({ navigation }) {
             />
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.primaryContainer }]}
+                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.surfaceVariant }]}
                 onPress={() => {
                   setModalVisible(false);
                   setNewGroupName('');
@@ -283,7 +314,7 @@ export default function GroupsScreen({ navigation }) {
             />
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.primaryContainer }]}
+                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.surfaceVariant }]}
                 onPress={() => {
                   setEditingGroup(null);
                   setEditGroupName('');
@@ -323,7 +354,6 @@ const styles = StyleSheet.create({
   title: {
     fontFamily: 'Ysabeau-Bold',
     fontSize: 32,
-    fontWeight: '800',
     color: '#1C1B1F',
     letterSpacing: -0.5,
   },
@@ -398,7 +428,6 @@ const styles = StyleSheet.create({
   groupTotal: {
     fontFamily: 'Ysabeau-Bold',
     fontSize: 22,
-    fontWeight: '800',
     color: '#6750A4',
   },
   peoplePills: {
@@ -467,7 +496,6 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontFamily: 'Ysabeau-Bold',
     fontSize: 24,
-    fontWeight: '800',
     marginBottom: 20,
     color: '#1C1B1F',
     letterSpacing: -0.3,
@@ -475,7 +503,6 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontFamily: 'Ysabeau-Bold',
     fontSize: 13,
-    fontWeight: '700',
     marginBottom: 10,
     marginTop: 4,
     color: '#49454F',
