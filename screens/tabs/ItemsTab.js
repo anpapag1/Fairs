@@ -101,30 +101,38 @@ export default function ItemsTab({ route }) {
       outputRange: [160, 0],
     });
 
+    const opacity = progress.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 1],
+    });
+
     return (
       <Animated.View 
-        style={[
-          styles.swipeActionsContainer,
-          { transform: [{ translateX }] }
-        ]}
+      style={[
+        styles.swipeActionsContainer,
+        { 
+        transform: [{ translateX }],
+        opacity 
+        }
+      ]}
       >
-        <TouchableOpacity
-          style={[styles.swipeAction, styles.editAction, { backgroundColor: theme.primary }]}
-          onPress={() => openEditItem(item)}
-          activeOpacity={0.9}
-        >
-          <Text style={[styles.swipeActionIcon, { color: theme.onPrimary }]}>✎</Text>
-          <Text style={[styles.swipeActionText, { color: theme.onPrimary }]}>Edit</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={[styles.swipeAction, styles.deleteAction, { backgroundColor: theme.error }]}
-          onPress={() => deleteItem(item.id)}
-          activeOpacity={0.9}
-        >
-          <Text style={[styles.swipeActionIcon, { color: theme.onError }]}>×</Text>
-          <Text style={[styles.swipeActionText, { color: theme.onError }]}>Delete</Text>
-        </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.swipeAction, styles.editAction, { backgroundColor: theme.primary }]}
+        onPress={() => openEditItem(item)}
+        activeOpacity={0.9}
+      >
+        <Text style={[styles.swipeActionIcon, { color: theme.onPrimary }]}>✎</Text>
+        <Text style={[styles.swipeActionText, { color: theme.onPrimary }]}>Edit</Text>
+      </TouchableOpacity>
+      
+      <TouchableOpacity
+        style={[styles.swipeAction, styles.deleteAction, { backgroundColor: theme.warningContainer }]}
+        onPress={() => deleteItem(item.id)}
+        activeOpacity={0.9}
+      >
+        <Text style={[styles.swipeActionIcon, { color: theme.onWarning }]}>×</Text>
+        <Text style={[styles.swipeActionText, { color: theme.onWarning }]}>Delete</Text>
+      </TouchableOpacity>
       </Animated.View>
     );
   };
@@ -137,82 +145,67 @@ export default function ItemsTab({ route }) {
       rightThreshold={40}
       containerStyle={styles.swipeableContainer}
     >
-      <View style={[styles.itemRow, { backgroundColor: theme.surface, borderBottomColor: theme.outlineVariant }]}>
-        <Text style={[styles.itemNumber, { color: theme.onSurfaceVariant }]}>{index + 1}</Text>
-        <Text style={[styles.itemName, { color: theme.onSurface }]}>{item.name}</Text>
-        <Text style={[styles.itemPrice, { color: theme.onSurface }]}>{currencySymbol}{parseFloat(item.price).toFixed(2)}</Text>
+      <View style={[styles.itemRow, { backgroundColor: theme.surface }]}>
+        <Text style={[styles.itemNumber, { color: theme.textSecondary }]}>{index + 1}</Text>
+        <Text style={[styles.itemName, { color: theme.textPrimary }]}>{item.name}</Text>
+        <Text style={[styles.itemPrice, { color: theme.textPrimary }]}>{currencySymbol}{parseFloat(item.price).toFixed(2)}</Text>
       </View>
     </Swipeable>
   );
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      {items.length === 0 ? (
-        <>
-          <View style={styles.emptyContainer}>
-            <Text style={[styles.emptyText, { color: theme.onSurfaceVariant }]}>No items yet</Text>
-            <Text style={[styles.emptySubtext, { color: theme.outline }]}>Tap + to add items</Text>
-          </View>
-          <TouchableOpacity
-            style={[styles.addButton, { backgroundColor: theme.primary, shadowColor: theme.primary }]}
-            onPress={() => setModalVisible(true)}
-          >
-            <Text style={[styles.addButtonText, { color: theme.onPrimary }]}>+</Text>
-          </TouchableOpacity>
-        </>
-      ) : (
-        <>
-          <View style={[styles.listHeader, { backgroundColor: theme.primaryContainer }]}>
-            <Text style={[styles.headerNumber, { color: theme.primary }]}>#</Text>
-            <Text style={[styles.headerItem, { color: theme.primary }]}>Item</Text>
-            <Text style={[styles.headerPrice, { color: theme.primary }]}>Price</Text>
-            <View style={styles.headerSpacer} />
+      <>
+        <View style={[styles.listHeader, { backgroundColor: theme.surfaceContainerHigh }]}>
+          <Text style={[styles.headerNumber, { color: theme.primary }]}>#</Text>
+          <Text style={[styles.headerItem, { color: theme.primary }]}>Item</Text>
+          <Text style={[styles.headerPrice, { color: theme.primary }]}>Price</Text>
+        </View>
+        
+        <FlatList
+          data={items}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContainer}
+          ListFooterComponent={
+            <TouchableOpacity
+              style={[styles.addItemButton, { borderColor: theme.primary, backgroundColor: theme.surface }]}
+              onPress={() => setModalVisible(true)}
+            >
+              <Text style={[styles.addItemButtonText, { color: theme.primary }]}>+ Add Item</Text>
+            </TouchableOpacity>
+          }
+        />
+
+        <View style={[styles.totalsContainer, { backgroundColor: theme.surface, borderTopColor: theme.outlineVariant, shadowColor: theme.shadow }]}>
+          <View style={styles.tipContainer}>
+            <Text style={[styles.tipLabel, { color: theme.textPrimary }]}>Tip:</Text>
+            <TextInput
+              style={[styles.tipInput, { borderColor: theme.outline, backgroundColor: theme.surface, color: theme.textPrimary }]}
+              placeholder="0"
+              placeholderTextColor={theme.textSecondary}
+              keyboardType="decimal-pad"
+              value={tipValue}
+              onChangeText={setTipValue}
+            />
+            <TouchableOpacity 
+              style={[styles.tipModeButton, { borderColor: theme.outline, backgroundColor: theme.surface }]}
+              onPress={() => setTipMode(tipMode === 'percent' ? 'money' : 'percent')}
+            >
+              <Text style={[styles.tipModeText, { color: theme.primary }]}>
+                {tipMode === 'percent' ? '%' : currencySymbol}
+              </Text>
+            </TouchableOpacity>
+            <Text style={[styles.tipAmount, { color: theme.textPrimary }]}>{currencySymbol}{calculateTip().toFixed(2)}</Text>
           </View>
           
-          <FlatList
-            data={items}
-            renderItem={renderItem}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={styles.listContainer}
-            ListFooterComponent={
-              <TouchableOpacity
-                style={[styles.addItemButton, { borderColor: theme.primary, backgroundColor: theme.background }]}
-                onPress={() => setModalVisible(true)}
-              >
-                <Text style={[styles.addItemButtonText, { color: theme.primary }]}>+ Add Item</Text>
-              </TouchableOpacity>
-            }
-          />
-
-          <View style={[styles.totalsContainer, { backgroundColor: theme.surface, borderTopColor: theme.outlineVariant, shadowColor: theme.shadow }]}>
-            <View style={styles.tipContainer}>
-              <Text style={[styles.tipLabel, { color: theme.onSurface }]}>Tip:</Text>
-              <TextInput
-                style={[styles.tipInput, { borderColor: theme.outline, backgroundColor: theme.surface, color: theme.onSurface }]}
-                placeholder="0"
-                placeholderTextColor={theme.onSurfaceVariant}
-                keyboardType="decimal-pad"
-                value={tipValue}
-                onChangeText={setTipValue}
-              />
-              <TouchableOpacity 
-                style={[styles.tipModeButton, { borderColor: theme.outline, backgroundColor: theme.primaryContainer }]}
-                onPress={() => setTipMode(tipMode === 'percent' ? 'money' : 'percent')}
-              >
-                <Text style={[styles.tipModeText, { color: theme.primary }]}>
-                  {tipMode === 'percent' ? '%' : currencySymbol}
-                </Text>
-              </TouchableOpacity>
-              <Text style={[styles.tipAmount, { color: theme.onSurface }]}>{currencySymbol}{calculateTip().toFixed(2)}</Text>
-            </View>
-            
-            <View style={styles.totalRow}>
-              <Text style={[styles.totalLabel, { color: theme.onSurface }]}>Total:</Text>
-              <Text style={[styles.totalAmount, { color: theme.primary }]}>{currencySymbol}{calculateTotal().toFixed(2)}</Text>
-            </View>
+          <View style={styles.totalRow}>
+            <Text style={[styles.totalLabel, { color: theme.textSecondary }]}>Total:</Text>
+            <Text style={[styles.totalAmount, { color: theme.primary }]}>{currencySymbol}{calculateTotal().toFixed(2)}</Text>
           </View>
-        </>
-      )}
+        </View>
+      </>
+      
 
       <Modal
         animationType="slide"
@@ -222,23 +215,23 @@ export default function ItemsTab({ route }) {
       >
         <View style={styles.modalContainer}>
           <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]}>
-            <Text style={[styles.modalTitle, { color: theme.onSurface }]}>Add Item</Text>
-            
-            <Text style={[styles.inputLabel, { color: theme.onSurfaceVariant }]}>Item Name</Text>
+            <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Add Item</Text>
+
+            <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Item Name</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surface, color: theme.onSurface }]}
+              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surface, color: theme.textPrimary }]}
               placeholder="e.g., Pizza"
-              placeholderTextColor={theme.onSurfaceVariant}
+              placeholderTextColor={theme.textSecondary}
               value={newItemName}
               onChangeText={setNewItemName}
               autoFocus
             />
             
-            <Text style={[styles.inputLabel, { color: theme.onSurfaceVariant }]}>Price</Text>
+            <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Price</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surface, color: theme.onSurface }]}
+              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surface, color: theme.textPrimary }]}
               placeholder="0.00"
-              placeholderTextColor={theme.onSurfaceVariant}
+              placeholderTextColor={theme.textSecondary}
               keyboardType="decimal-pad"
               value={newItemPrice}
               onChangeText={setNewItemPrice}
@@ -246,7 +239,7 @@ export default function ItemsTab({ route }) {
             
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.primaryContainer }]}
+                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.surfaceVariant }]}
                 onPress={() => {
                   setModalVisible(false);
                   setNewItemName('');
@@ -279,23 +272,23 @@ export default function ItemsTab({ route }) {
       >
         <View style={styles.modalContainer}>
           <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]}>
-            <Text style={[styles.modalTitle, { color: theme.onSurface }]}>Edit Item</Text>
-            
-            <Text style={[styles.inputLabel, { color: theme.onSurfaceVariant }]}>Item Name</Text>
+            <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Edit Item</Text>
+
+            <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Item Name</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surface, color: theme.onSurface }]}
+              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surface, color: theme.textPrimary }]}
               placeholder="e.g., Pizza"
-              placeholderTextColor={theme.onSurfaceVariant}
+              placeholderTextColor={theme.textSecondary}
               value={editItemName}
               onChangeText={setEditItemName}
               autoFocus
             />
-            
-            <Text style={[styles.inputLabel, { color: theme.onSurfaceVariant }]}>Price</Text>
+
+            <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Price</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surface, color: theme.onSurface }]}
+              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surface, color: theme.textPrimary }]}
               placeholder="0.00"
-              placeholderTextColor={theme.onSurfaceVariant}
+              placeholderTextColor={theme.textSecondary}
               keyboardType="decimal-pad"
               value={editItemPrice}
               onChangeText={setEditItemPrice}
@@ -303,7 +296,7 @@ export default function ItemsTab({ route }) {
             
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.primaryContainer }]}
+                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.surfaceVariant }]}
                 onPress={() => {
                   setEditingItem(null);
                   setEditItemName('');
@@ -336,12 +329,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyText: {
+    fontFamily: 'Ysabeau-Regular',
     fontSize: 20,
     color: '#79747E',
     marginBottom: 8,
     fontWeight: '500',
   },
   emptySubtext: {
+    fontFamily: 'Ysabeau-Regular',
     fontSize: 14,
     color: '#CAC4D0',
     fontWeight: '400',
@@ -352,8 +347,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     backgroundColor: '#E8DEF8',
+    margin: 8,
+    borderRadius: 16,
   },
   headerNumber: {
+    fontFamily: 'Ysabeau-Bold',
     width: 30,
     fontSize: 14,
     fontWeight: '700',
@@ -361,6 +359,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   headerItem: {
+    fontFamily: 'Ysabeau-Bold',
     flex: 1,
     fontSize: 14,
     fontWeight: '700',
@@ -368,6 +367,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   headerPrice: {
+    fontFamily: 'Ysabeau-Bold',
     width: 80,
     fontSize: 14,
     fontWeight: '700',
@@ -386,23 +386,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 18,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E8DEF8',
+    margin: 4,
+    borderRadius: 16,
   },
   itemNumber: {
+    fontFamily: 'Ysabeau-Regular',
     width: 30,
     fontSize: 16,
     color: '#79747E',
     fontWeight: '500',
   },
   itemName: {
+    fontFamily: 'Ysabeau-Regular',
     flex: 1,
     fontSize: 16,
     color: '#1C1B1F',
     fontWeight: '400',
   },
   itemPrice: {
+    fontFamily: 'Ysabeau-SemiBold',
     width: 80,
     fontSize: 17,
     fontWeight: '600',
@@ -414,6 +416,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   deleteButtonText: {
+    fontFamily: 'Ysabeau-Regular',
     fontSize: 20,
     color: '#BA1A1A',
   },
@@ -437,6 +440,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   tipLabel: {
+    fontFamily: 'Ysabeau-SemiBold',
     fontSize: 16,
     fontWeight: '600',
     marginRight: 12,
@@ -444,6 +448,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.15,
   },
   tipInput: {
+    fontFamily: 'Ysabeau-Regular',
     borderWidth: 1,
     borderColor: '#79747E',
     borderRadius: 12,
@@ -467,11 +472,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tipModeText: {
+    fontFamily: 'Ysabeau-Bold',
     fontSize: 16,
     fontWeight: '700',
     color: '#6750A4',
   },
   tipAmount: {
+    fontFamily: 'Ysabeau-SemiBold',
     fontSize: 17,
     fontWeight: '600',
     marginLeft: 'auto',
@@ -483,12 +490,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   totalLabel: {
+    fontFamily: 'Ysabeau-Bold',
     fontSize: 22,
     fontWeight: '700',
     color: '#1C1B1F',
     letterSpacing: 0.15,
   },
   totalAmount: {
+    fontFamily: 'Ysabeau-Bold',
     fontSize: 28,
     fontWeight: '700',
     color: '#6750A4',
@@ -506,6 +515,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   addItemButtonText: {
+    fontFamily: 'Ysabeau-SemiBold',
     fontSize: 16,
     fontWeight: '600',
     color: '#6750A4',
@@ -528,6 +538,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
   },
   addButtonText: {
+    fontFamily: 'Ysabeau-SemiBold',
     fontSize: 40,
     color: '#FFFFFF',
     fontWeight: '600',
@@ -553,6 +564,7 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   modalTitle: {
+    fontFamily: 'Ysabeau-Bold',
     fontSize: 28,
     fontWeight: '700',
     marginBottom: 24,
@@ -560,6 +572,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   inputLabel: {
+    fontFamily: 'Ysabeau-SemiBold',
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 8,
@@ -567,6 +580,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.25,
   },
   input: {
+    fontFamily: 'Ysabeau-Regular',
     borderWidth: 1,
     borderColor: '#79747E',
     borderRadius: 12,
@@ -592,6 +606,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8DEF8',
   },
   cancelButtonText: {
+    fontFamily: 'Ysabeau-SemiBold',
     fontSize: 16,
     fontWeight: '600',
     color: '#6750A4',
@@ -601,6 +616,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#6750A4',
   },
   createButtonText: {
+    fontFamily: 'Ysabeau-SemiBold',
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
@@ -613,12 +629,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'stretch',
     height: '100%',
+    padding: 4,
   },
   swipeAction: {
     justifyContent: 'center',
     alignItems: 'center',
     width: 80,
     height: '100%',
+    marginRight: 4,
+    borderRadius: 16,
   },
   editAction: {
     backgroundColor: '#6750A4',
@@ -627,12 +646,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#BA1A1A',
   },
   swipeActionIcon: {
+    fontFamily: 'Ysabeau-Regular',
     fontSize: 24,
     fontWeight: '400',
     color: '#FFFFFF',
     marginBottom: 4,
   },
   swipeActionText: {
+    fontFamily: 'Ysabeau-SemiBold',
     color: '#FFFFFF',
     fontWeight: '600',
     fontSize: 11,

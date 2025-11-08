@@ -50,10 +50,11 @@ export const GroupsProvider = ({ children }) => {
     }
   };
 
-  const addGroup = (name, date) => {
+  const addGroup = (name, date, emoji = 'beer') => {
     const newGroup = {
       id: Date.now().toString(),
       name: name,
+      emoji: emoji,
       date: date,
       items: [],
       people: [],
@@ -97,10 +98,10 @@ export const GroupsProvider = ({ children }) => {
     ));
   };
 
-  const updateGroupName = (groupId, name) => {
+  const updateGroupName = (groupId, name, emoji) => {
     setGroups(groups.map(group => 
       group.id === groupId 
-        ? { ...group, name }
+        ? { ...group, name, emoji: emoji || group.emoji || 'beer' }
         : group
     ));
   };

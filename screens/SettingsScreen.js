@@ -19,7 +19,7 @@ export default function SettingsScreen({ navigation }) {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
       <View style={[styles.header, { backgroundColor: theme.background }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: theme.primaryContainer }]}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: theme.surfaceContainer }]}>
           <Text style={[styles.backArrow, { color: theme.primary }]}>←</Text>
         </TouchableOpacity>
         <Text style={[styles.title, { color: theme.onBackground }]}>Settings</Text>
@@ -28,9 +28,9 @@ export default function SettingsScreen({ navigation }) {
 
       <ScrollView style={styles.content}>
         {/* Theme Section */}
-        <View style={[styles.section, { backgroundColor: theme.surface, shadowColor: theme.shadow }]}>
-          <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>Appearance</Text>
-          <Text style={[styles.sectionDescription, { color: theme.onSurfaceVariant }]}>
+        <View style={[styles.section, { backgroundColor: theme.surfaceVariant, shadowColor: theme.shadow }]}>
+          <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Appearance</Text>
+          <Text style={[styles.sectionDescription, { color: theme.textSecondary }]}>
             Choose your preferred theme
           </Text>
           
@@ -49,8 +49,8 @@ export default function SettingsScreen({ navigation }) {
               ]}>☀️</Text>
               <Text style={[
                 styles.themeOptionText,
-                { color: theme.onSurface },
-                themeMode === 'light' && { color: theme.primary, fontWeight: '700' }
+                { color: theme.textPrimary },
+                themeMode === 'light' && { color: theme.primary, fontWeight: '700', fontFamily: 'Ysabeau-Bold' }
               ]}>Light</Text>
             </TouchableOpacity>
 
@@ -68,24 +68,24 @@ export default function SettingsScreen({ navigation }) {
               ]}>🌙</Text>
               <Text style={[
                 styles.themeOptionText,
-                { color: theme.onSurface },
-                themeMode === 'dark' && { color: theme.primary, fontWeight: '700' }
+                { color: theme.textPrimary },
+                themeMode === 'dark' && { color: theme.primary, fontWeight: '700', fontFamily: 'Ysabeau-Bold' }
               ]}>Dark</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* Currency Section */}
-        <View style={[styles.section, { backgroundColor: theme.surface, shadowColor: theme.shadow }]}>
-          <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>Currency</Text>
-          <Text style={[styles.sectionDescription, { color: theme.onSurfaceVariant }]}>
+        <View style={[styles.section, { backgroundColor: theme.surfaceVariant, shadowColor: theme.shadow }]}>
+          <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Currency</Text>
+          <Text style={[styles.sectionDescription, { color: theme.textSecondary }]}>
             Select your preferred currency for displaying amounts
           </Text>
-          <View style={[styles.pickerContainer, { borderColor: theme.outline, backgroundColor: theme.surface }]}>
+          <View style={[styles.pickerContainer, { backgroundColor: theme.surfaceContainer }]}>
             <Picker
               selectedValue={currencyCode}
               onValueChange={(itemValue) => setCurrencyCode(itemValue)}
-              style={[styles.picker, { color: theme.onSurface }]}
+              style={[styles.picker, { color: theme.textPrimary }]}
             >
               {currencies.map((currency) => (
                 <Picker.Item
@@ -116,16 +116,21 @@ const styles = StyleSheet.create({
     backgroundColor: '#FEF7FF',
   },
   backButton: {
-    padding: 12,
+    padding: 8,
     backgroundColor: '#E8DEF8',
     borderRadius: 20,
+    width: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   backArrow: {
+    fontFamily: 'Ysabeau-SemiBold',
     fontSize: 24,
     fontWeight: '600',
     color: '#6750A4',
   },
   title: {
+    fontFamily: 'Ysabeau-Bold',
     fontSize: 36,
     fontWeight: '700',
     color: '#1C1B1F',
@@ -152,6 +157,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   sectionTitle: {
+    fontFamily: 'Ysabeau-Bold',
     fontSize: 24,
     fontWeight: '700',
     marginBottom: 8,
@@ -159,6 +165,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.15,
   },
   sectionDescription: {
+    fontFamily: 'Ysabeau-Regular',
     fontSize: 14,
     color: '#49454F',
     marginBottom: 24,
@@ -188,10 +195,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   themeOptionIcon: {
+    fontFamily: 'Ysabeau-Regular',
     fontSize: 32,
     marginBottom: 8,
   },
   themeOptionText: {
+    fontFamily: 'Ysabeau-Regular',
     fontSize: 14,
     fontWeight: '500',
     letterSpacing: 0.5,

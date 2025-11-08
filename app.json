@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#FEF7FF"
+      "backgroundColor": "#ac45ff"
     },
     "ios": {
       "supportsTablet": true
@@ -19,7 +19,7 @@
       "package": "com.fairs.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#FEF7FF"
+        "backgroundColor": "#ac45ff"
       },
       "edgeToEdgeEnabled": true
     },
@@ -30,6 +30,9 @@
       "eas": {
         "projectId": "c7d0e3d5-0e61-4d40-99db-34581977cd7a"
       }
-    }
+    },
+    "plugins": [
+      "expo-font"
+    ]
   }
 }

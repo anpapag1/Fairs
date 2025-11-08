@@ -15,7 +15,7 @@ export default function GroupDetailScreen({ route }) {
       tabBarPosition="bottom"
       screenOptions={{
         tabBarActiveTintColor: theme.primary,
-        tabBarInactiveTintColor: theme.onSurfaceVariant,
+        tabBarInactiveTintColor: theme.textSecondary,
         tabBarStyle: {
           backgroundColor: theme.surface,
           borderTopWidth: 1,
@@ -36,6 +36,7 @@ export default function GroupDetailScreen({ route }) {
           borderRadius: 2,
         },
         tabBarLabelStyle: {
+          fontFamily: 'Ysabeau-Bold',
           fontSize: 16,
           fontWeight: '700',
           textTransform: 'none',

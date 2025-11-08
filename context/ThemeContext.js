@@ -6,129 +6,91 @@ const ThemeContext = createContext();
 
 const THEME_STORAGE_KEY = '@fairs_theme';
 
-// Material 3 Color Tokens
+// Simplified Color Tokens
 export const lightTheme = {
   // Primary
-  primary: '#6750A4',
+  primary: '#8c00ffff',
   onPrimary: '#FFFFFF',
-  primaryContainer: '#E8DEF8',
-  onPrimaryContainer: '#21005D',
-  
-  // Secondary
-  secondary: '#625B71',
-  onSecondary: '#FFFFFF',
-  secondaryContainer: '#E8DEF8',
-  onSecondaryContainer: '#1D192B',
-  
-  // Tertiary
-  tertiary: '#7D5260',
-  onTertiary: '#FFFFFF',
-  tertiaryContainer: '#FFD8E4',
-  onTertiaryContainer: '#31111D',
-  
-  // Error
-  error: '#BA1A1A',
-  onError: '#FFFFFF',
-  errorContainer: '#FFDAD6',
-  onErrorContainer: '#410002',
+  primaryContainer: '#c6a5fcff',
   
   // Success
   success: '#198754',
   onSuccess: '#FFFFFF',
   successContainer: '#E8F5E9',
-  onSuccessContainer: '#0D5028',
+  onSuccessContainer: '#198754',
   
-  // Warning
-  warning: '#E65100',
+  // Warning 
+  warning: '#ff9900ff',
   onWarning: '#FFFFFF',
-  warningContainer: '#FFF4E5',
-  onWarningContainer: '#4E2000',
+  warningContainer: '#e74634',
+  onWarningContainer: '#000000ff',
   
   // Background
-  background: '#FEF7FF',
+  background: '#e6d8e7ff',
   onBackground: '#1C1B1F',
   
   // Surface
-  surface: '#FFFBFE',
-  onSurface: '#1C1B1F',
-  surfaceVariant: '#E7E0EC',
-  onSurfaceVariant: '#49454F',
-  surfaceContainer: '#F3EDF7',
-  surfaceContainerHigh: '#ECE6F0',
-  surfaceContainerHighest: '#E6E0E9',
+  surface: '#c9bdc9',
+  onSurface: '#000000ff',
+  surfaceVariant: '#d6bcffff',
+  onSurfaceVariant: '#0000007c',
+  surfaceContainer: '#c9bdc9',
+  surfaceContainerHigh: '#00000030',
   
   // Outline
   outline: '#79747E',
   outlineVariant: '#CAC4D0',
+
+  // Text
+  textPrimary: '#000000',
+  textSecondary: '#0000007a',
+  textDisabled: '#79747E',
   
   // Other
   shadow: '#000000',
-  scrim: '#000000',
-  inverseSurface: '#313033',
-  inverseOnSurface: '#F4EFF4',
-  inversePrimary: '#D0BCFF',
 };
 
 export const darkTheme = {
   // Primary
-  primary: '#D0BCFF',
-  onPrimary: '#381E72',
-  primaryContainer: '#4F378B',
-  onPrimaryContainer: '#EADDFF',
-  
-  // Secondary
-  secondary: '#CCC2DC',
-  onSecondary: '#332D41',
-  secondaryContainer: '#4A4458',
-  onSecondaryContainer: '#E8DEF8',
-  
-  // Tertiary
-  tertiary: '#EFB8C8',
-  onTertiary: '#492532',
-  tertiaryContainer: '#633B48',
-  onTertiaryContainer: '#FFD8E4',
-  
-  // Error
-  error: '#FFB4AB',
-  onError: '#690005',
-  errorContainer: '#93000A',
-  onErrorContainer: '#FFDAD6',
+  primary: '#ac47ffff',
+  onPrimary: '#FFFFFF',
+  primaryContainer: '#c6a5fcff',
   
   // Success
-  success: '#81C784',
-  onSuccess: '#0A3818',
-  successContainer: '#1B5E2C',
-  onSuccessContainer: '#A5D6A7',
+  success: '#198754',
+  onSuccess: '#FFFFFF',
+  successContainer: '#E8F5E9',
+  onSuccessContainer: '#198754',
   
-  // Warning
-  warning: '#FFB74D',
-  onWarning: '#4E2000',
-  warningContainer: '#6F3000',
-  onWarningContainer: '#FFD8A8',
+  // Warning 
+  warning: '#ff9900ff',
+  onWarning: '#FFFFFF',
+  warningContainer: '#e74634',
+  onWarningContainer: '#000000ff',
   
   // Background
-  background: '#1C1B1F',
-  onBackground: '#E6E1E5',
+  background: '#2D1B3D',
+  onBackground: '#d9d9daff',
   
   // Surface
-  surface: '#1C1B1F',
-  onSurface: '#E6E1E5',
-  surfaceVariant: '#49454F',
-  onSurfaceVariant: '#CAC4D0',
-  surfaceContainer: '#211F26',
-  surfaceContainerHigh: '#2B2930',
-  surfaceContainerHighest: '#36343B',
-  
+  surface: '#473755',
+  onSurface: '#000000ff',
+  surfaceVariant: '#653b86ff',
+  onSurfaceVariant: '#0000007c',
+  surfaceContainer: '#473755',
+  surfaceContainerHigh: '#00000030',
+
   // Outline
-  outline: '#938F99',
-  outlineVariant: '#49454F',
+  outline: '#3c3742ff',
+  outlineVariant: '#553972ff',
+
+  // Text
+  textPrimary: '#ffffffff',
+  textSecondary: '#ffffff7a',
+  textDisabled: '#79747E',
   
   // Other
   shadow: '#000000',
-  scrim: '#000000',
-  inverseSurface: '#E6E1E5',
-  inverseOnSurface: '#313033',
-  inversePrimary: '#6750A4',
 };
 
 export function ThemeProvider({ children }) {

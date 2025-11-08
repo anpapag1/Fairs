@@ -268,14 +268,14 @@ export default function PeopleTab({ route }) {
         </TouchableOpacity>
         
         <TouchableOpacity
-          style={[styles.swipeAction, { backgroundColor: theme.error }]}
+          style={[styles.swipeAction, { backgroundColor: theme.warningContainer }]}
           onPress={() => {
             deletePerson(item.id);
           }}
           activeOpacity={0.9}
         >
-          <Text style={styles.swipeActionIcon}>×</Text>
-          <Text style={styles.swipeActionText}>Delete</Text>
+          <Text style={[styles.swipeActionIcon, { color: theme.onWarning }]}>×</Text>
+          <Text style={[styles.swipeActionText, { color: theme.onWarning }]}>Delete</Text>
         </TouchableOpacity>
       </Animated.View>
     );
@@ -287,55 +287,59 @@ export default function PeopleTab({ route }) {
     
     return (
       <Swipeable
-        renderLeftActions={(progress, dragX) => renderLeftActions(item, progress, dragX)}
-        renderRightActions={(progress, dragX) => renderRightActions(item, progress, dragX)}
-        overshootLeft={false}
-        overshootRight={false}
-        friction={2}
-        leftThreshold={40}
-        rightThreshold={40}
-        containerStyle={styles.swipeableContainer}
+      renderLeftActions={(progress, dragX) => renderLeftActions(item, progress, dragX)}
+      renderRightActions={(progress, dragX) => renderRightActions(item, progress, dragX)}
+      overshootLeft={false}
+      overshootRight={false}
+      friction={2}
+      leftThreshold={40}
+      rightThreshold={40}
+      containerStyle={styles.swipeableContainer}
       >
-        <TouchableOpacity
-          style={[
-            styles.personItem,
-            { backgroundColor: theme.surfaceContainerHighest || theme.surfaceVariant, borderColor: theme.outlineVariant },
-            item.isPaid && { opacity: 0.65 }
-          ]}
-          onPress={() => openItemSelection(item)}
-          activeOpacity={0.7}
-        >
-          <View style={styles.personInfo}>
-            <View style={styles.personNameRow}>
-              <Text style={[
-                styles.personName,
-                { color: theme.onSurface },
-                item.isPaid && { opacity: 0.6 }
-              ]}>
-                {item.name}
-              </Text>
-              {item.isPaid && (
-                <View style={[styles.paidBadge, { backgroundColor: theme.successContainer }]}>
-                  <Text style={[styles.paidBadgeText, { color: theme.onSuccessContainer }]}>✓ Paid</Text>
-                </View>
-              )}
-            </View>
-            {selectedItemNames.length > 0 ? (
-              <Text style={[
-                styles.personItems,
-                { color: theme.onSurfaceVariant },
-                item.isPaid && { opacity: 0.6 }
-              ]} numberOfLines={2}>
-                {selectedItemNames.join(', ')}
-              </Text>
-            ) : (
-              <Text style={[styles.personNoItems, { color: theme.onSurfaceVariant }]}>No items selected</Text>
-            )}
+      <TouchableOpacity
+        style={[
+        styles.personItem,
+        { backgroundColor: theme.surfaceContainer || theme.surfaceVariant, borderColor: theme.outlineVariant },
+        item.isPaid && { opacity: 0.65 }
+        ]}
+        onPress={() => openItemSelection(item)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.personInfo}>
+        <View style={styles.personNameRow}>
+          <Text style={[
+          styles.personName,
+          { color: item.isPaid ? theme.textSecondary : theme.textPrimary },
+          item.isPaid && { opacity: 0.6 }
+          ]}>
+          {item.name}
+          </Text>
+          {item.isPaid && (
+          <View style={[styles.paidBadge, { backgroundColor: theme.successContainer }]}>
+            <Text style={[styles.paidBadgeText, { color: theme.onSuccessContainer }]}>✓ Paid</Text>
           </View>
-          <View style={[styles.personAmountContainer, { backgroundColor: theme.primaryContainer }]}>
-            <Text style={[styles.personAmount, { color: theme.onPrimaryContainer }]}>{currencySymbol}{amount.toFixed(2)}</Text>
-          </View>
-        </TouchableOpacity>
+          )}
+        </View>
+        {selectedItemNames.length > 0 ? (
+          <Text style={[
+          styles.personItems,
+          { color: item.isPaid ? theme.textSecondary : theme.textSecondary },
+          item.isPaid && { opacity: 0.6 }
+          ]} numberOfLines={2}>
+          {selectedItemNames.join(', ')}
+          </Text>
+        ) : (
+          <Text style={[styles.personNoItems, { color: item.isPaid ? theme.textSecondary : theme.textSecondary }]}>
+          No items selected
+          </Text>
+        )}
+        </View>
+        <View style={[styles.personAmountContainer, { backgroundColor: item.isPaid ? theme.success : theme.primary }]}>
+        <Text style={[styles.personAmount, { color: item.isPaid ? theme.textSecondary : theme.textPrimary }]}>
+          {currencySymbol}{amount.toFixed(2)}
+        </Text>
+        </View>
+      </TouchableOpacity>
       </Swipeable>
     );
   };
@@ -375,27 +379,27 @@ export default function PeopleTab({ route }) {
         ]}>
           {isSelected && <Text style={styles.checkmark}>✓</Text>}
         </View>
-        <Text style={[styles.itemCheckboxName, { color: theme.onSurface }]}>{itemName}</Text>
-        <Text style={[styles.itemCheckboxPrice, { color: theme.onSurfaceVariant }]}>{currencySymbol}{itemPrice.toFixed(2)}</Text>
+        <Text style={[styles.itemCheckboxName, { color: theme.textPrimary }]}>{itemName}</Text>
+        <Text style={[styles.itemCheckboxPrice, { color: theme.textSecondary }]}>{currencySymbol}{itemPrice.toFixed(2)}</Text>
       </TouchableOpacity>
     );
   };
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={[styles.splitModeContainer, { backgroundColor: theme.surface, borderBottomColor: theme.outlineVariant }]}>
-        <Text style={[styles.sectionTitle, { color: theme.onSurface }]}>Split Mode</Text>
+      <View style={[styles.splitModeContainer, { backgroundColor: theme.background, borderBottomColor: theme.outlineVariant }]}>
+        <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Split Mode</Text>
         <View style={styles.splitModeButtons}>
           <TouchableOpacity
             style={[
               styles.splitModeButton,
-              { borderColor: theme.outline, backgroundColor: splitMode === 'equal' ? theme.primaryContainer : 'transparent' }
+              { borderColor: theme.primary, backgroundColor: splitMode === 'equal' ? theme.surfaceContainer : 'transparent' }
             ]}
             onPress={() => setSplitMode('equal')}
           >
             <Text style={[
               styles.splitModeButtonText,
-              { color: splitMode === 'equal' ? theme.onPrimaryContainer : theme.onSurfaceVariant }
+              { color: splitMode === 'equal' ? theme.textPrimary : theme.textSecondary }
             ]}>
               Equal Split
             </Text>
@@ -404,13 +408,13 @@ export default function PeopleTab({ route }) {
           <TouchableOpacity
             style={[
               styles.splitModeButton,
-              { borderColor: theme.outline, backgroundColor: splitMode === 'separate' ? theme.primaryContainer : 'transparent' }
+              { borderColor: theme.primary, backgroundColor: splitMode === 'separate' ? theme.surfaceContainer : 'transparent' }
             ]}
             onPress={() => setSplitMode('separate')}
           >
             <Text style={[
               styles.splitModeButtonText,
-              { color: splitMode === 'separate' ? theme.onPrimaryContainer : theme.onSurfaceVariant }
+              { color: splitMode === 'separate' ? theme.textPrimary : theme.textSecondary }
             ]}>
               Separate Split
             </Text>
@@ -421,12 +425,12 @@ export default function PeopleTab({ route }) {
       {splitMode === 'equal' ? (
         <View style={styles.equalSplitContainer}>
           <View style={[styles.totalContainer, { backgroundColor: theme.surfaceVariant }]}>
-            <Text style={[styles.totalLabel, { color: theme.onSurfaceVariant }]}>Total Amount:</Text>
-            <Text style={[styles.totalAmount, { color: theme.onSurfaceVariant }]}>{currencySymbol}{total.toFixed(2)}</Text>
+            <Text style={[styles.totalLabel, { color: theme.textSecondary }]}>Total Amount:</Text>
+            <Text style={[styles.totalAmount, { color: theme.textSecondary }]}>{currencySymbol}{total.toFixed(2)}</Text>
           </View>
 
           <View style={styles.peopleInputContainer}>
-            <Text style={[styles.inputLabel, { color: theme.onSurface }]}>Number of People:</Text>
+            <Text style={[styles.inputLabel, { color: theme.textPrimary }]}>Number of People:</Text>
             <View style={styles.inputRow}>
               <TouchableOpacity
                 style={[styles.counterButton, { backgroundColor: theme.primary }]}
@@ -439,9 +443,9 @@ export default function PeopleTab({ route }) {
               </TouchableOpacity>
               
               <TextInput
-                style={[styles.peopleInput, { borderColor: theme.outline, color: theme.onSurface, backgroundColor: theme.surface }]}
+                style={[styles.peopleInput, { borderColor: theme.outline, color: theme.textPrimary, backgroundColor: theme.surface }]}
                 placeholder="0"
-                placeholderTextColor={theme.onSurfaceVariant}
+                placeholderTextColor={theme.textSecondary}
                 keyboardType="number-pad"
                 value={numberOfPeople}
                 onChangeText={setNumberOfPeople}
@@ -460,8 +464,8 @@ export default function PeopleTab({ route }) {
           </View>
 
           {numberOfPeople && parseInt(numberOfPeople) > 0 && (
-            <View style={[styles.resultContainer, { backgroundColor: theme.primaryContainer }]}>
-              <Text style={[styles.resultLabel, { color: theme.onPrimaryContainer }]}>Each Person Pays:</Text>
+            <View style={[styles.resultContainer, { backgroundColor: theme.surfaceVariant }]}>
+              <Text style={[styles.resultLabel, { color: theme.textPrimary }]}>Each Person Pays:</Text>
               <Text style={[styles.resultAmount, { color: theme.primary }]}>
                 {currencySymbol}{calculatePerPerson().toFixed(2)}
               </Text>
@@ -472,16 +476,16 @@ export default function PeopleTab({ route }) {
         <View style={styles.separateSplitContainer}>
           {people.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <Text style={[styles.emptyText, { color: theme.onSurfaceVariant }]}>No people added</Text>
-              <Text style={[styles.emptySubtext, { color: theme.onSurfaceVariant }]}>Tap + to add people to split</Text>
+              <Text style={[styles.emptyText, { color: theme.textSecondary }]}>No people added</Text>
+              <Text style={[styles.emptySubtext, { color: theme.textSecondary }]}>Tap + to add people to split</Text>
             </View>
           ) : (
             <>
               {!isBillBalanced() && (
-                <View style={[styles.errorContainer, { backgroundColor: theme.errorContainer }]}>
+                <View style={[styles.errorContainer, { backgroundColor: theme.warningContainer }]}>
                   <Text style={styles.errorIcon}>⚠️</Text>
                   <View style={styles.errorTextContainer}>
-                    <Text style={[styles.errorText, { color: theme.onErrorContainer }]}>
+                    <Text style={[styles.errorText, { color: theme.onWarningContainer }]}>
                       Totals don't match! Difference: {currencySymbol}{Math.abs(total - calculateTotalAssigned()).toFixed(2)}
                     </Text>
                     {!getTipAssignmentStatus().assigned && tipValue && parseFloat(tipValue) > 0 && (
@@ -520,13 +524,13 @@ export default function PeopleTab({ route }) {
       >
         <View style={styles.modalContainer}>
           <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]}>
-            <Text style={[styles.modalTitle, { color: theme.onSurface }]}>Add Person</Text>
+            <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Add Person</Text>
             
-            <Text style={[styles.inputLabel, { color: theme.onSurface }]}>Name</Text>
+            <Text style={[styles.inputLabel, { color: theme.textPrimary }]}>Name</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.outline, color: theme.onSurface, backgroundColor: theme.surface }]}
+              style={[styles.input, { borderColor: theme.outline, color: theme.textPrimary, backgroundColor: theme.surface }]}
               placeholder="e.g., John"
-              placeholderTextColor={theme.onSurfaceVariant}
+              placeholderTextColor={theme.textSecondary}
               value={newPersonName}
               onChangeText={setNewPersonName}
               autoFocus
@@ -565,13 +569,13 @@ export default function PeopleTab({ route }) {
       >
         <View style={styles.modalContainer}>
           <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]}>
-            <Text style={[styles.modalTitle, { color: theme.onSurface }]}>Edit Person</Text>
+            <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Edit Person</Text>
             
-            <Text style={[styles.inputLabel, { color: theme.onSurface }]}>Name</Text>
+            <Text style={[styles.inputLabel, { color: theme.textPrimary }]}>Name</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.outline, color: theme.onSurface, backgroundColor: theme.surface }]}
+              style={[styles.input, { borderColor: theme.outline, color: theme.textPrimary, backgroundColor: theme.surface }]}
               placeholder="e.g., John"
-              placeholderTextColor={theme.onSurfaceVariant}
+              placeholderTextColor={theme.textSecondary}
               value={editPersonName}
               onChangeText={setEditPersonName}
               autoFocus
@@ -608,10 +612,10 @@ export default function PeopleTab({ route }) {
         <View style={styles.itemModalContainer}>
           <View style={[styles.itemModalContent, { backgroundColor: theme.surface }]}>
             <View style={[styles.itemModalHeader, { borderBottomColor: theme.outlineVariant }]}>
-              <Text style={[styles.itemModalTitle, { color: theme.onSurface }]}>
+              <Text style={[styles.itemModalTitle, { color: theme.textPrimary }]}>
                 {selectedPerson?.name}
               </Text>
-              <Text style={[styles.itemModalSubtitle, { color: theme.onSurfaceVariant }]}>
+              <Text style={[styles.itemModalSubtitle, { color: theme.textSecondary }]}>
                 Select items this person consumed
               </Text>
             </View>
@@ -629,8 +633,8 @@ export default function PeopleTab({ route }) {
                 </>
               ) : (
                 <View style={styles.noItemsContainer}>
-                  <Text style={[styles.noItemsText, { color: theme.onSurfaceVariant }]}>No items in this bill</Text>
-                  <Text style={[styles.noItemsSubtext, { color: theme.onSurfaceVariant }]}>Add items in the Items tab first</Text>
+                  <Text style={[styles.noItemsText, { color: theme.textSecondary }]}>No items in this bill</Text>
+                  <Text style={[styles.noItemsSubtext, { color: theme.textSecondary }]}>Add items in the Items tab first</Text>
                 </View>
               )}
             </ScrollView>
@@ -660,6 +664,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E8DEF8',
   },
   sectionTitle: {
+    fontFamily: 'Ysabeau-Bold',
     fontSize: 20,
     fontWeight: '700',
     marginBottom: 16,
@@ -683,6 +688,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#6750A4',
   },
   splitModeButtonText: {
+    fontFamily: 'Ysabeau-SemiBold',
     fontSize: 16,
     fontWeight: '600',
     color: '#6750A4',
@@ -699,10 +705,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#FFFBFE',
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: '#E8DEF8',
     marginBottom: 24,
     shadowColor: '#000',
     shadowOffset: {
@@ -769,17 +772,17 @@ const styles = StyleSheet.create({
   },
   resultContainer: {
     padding: 24,
-    backgroundColor: '#6750A4',
     borderRadius: 24,
     alignItems: 'center',
-    shadowColor: '#6750A4',
+    backgroundColor: '#6750A4',
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 4,
     },
-    shadowOpacity: 0,
+    shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 4,
+    elevation: 2,
   },
   resultLabel: {
     fontSize: 16,
@@ -820,13 +823,11 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: '#FFF4E5',
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#FFB74D',
+    borderWidth: 0,
   },
   errorIcon: {
     fontSize: 20,
     marginRight: 8,
-    color: '#E65100',
   },
   errorTextContainer: {
     flex: 1,

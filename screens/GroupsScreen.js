@@ -11,9 +11,31 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Swipeable } from 'react-native-gesture-handler';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useCurrency } from '../context/CurrencyContext';
 import { useGroups } from '../context/GroupsContext';
 import { useTheme } from '../context/ThemeContext';
+
+// Icon mapping for group types
+const ICON_OPTIONS = [
+  { id: 'beer', name: 'beer', library: 'Ionicons' },
+  { id: 'cookie', name: 'cookie', library: 'MaterialCommunityIcons' },
+  { id: 'pizza', name: 'pizza', library: 'Ionicons' },
+  { id: 'fast-food', name: 'fast-food', library: 'Ionicons' },
+  { id: 'cafe', name: 'cafe', library: 'Ionicons' },
+  { id: 'party-popper', name: 'party-popper', library: 'MaterialCommunityIcons' },
+  { id: 'airplane', name: 'airplane', library: 'Ionicons' },
+  { id: 'home', name: 'home', library: 'Ionicons' },
+  { id: 'game-controller', name: 'game-controller', library: 'Ionicons' },
+  { id: 'cash', name: 'cash', library: 'Ionicons' },
+];
+
+// Helper component to render the appropriate icon
+const GroupIcon = ({ iconId, size = 32, color }) => {
+  const icon = ICON_OPTIONS.find(i => i.id === iconId) || ICON_OPTIONS[0];
+  const IconComponent = icon.library === 'MaterialCommunityIcons' ? MaterialCommunityIcons : Ionicons;
+  return <IconComponent name={icon.name} size={size} color={color} />;
+};
 
 export default function GroupsScreen({ navigation }) {
   const { currencySymbol } = useCurrency();
@@ -21,16 +43,22 @@ export default function GroupsScreen({ navigation }) {
   const { theme } = useTheme();
   const [modalVisible, setModalVisible] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
+  const [newGroupEmoji, setNewGroupEmoji] = useState('beer');
   const [editingGroup, setEditingGroup] = useState(null);
   const [editGroupName, setEditGroupName] = useState('');
+  const [editGroupEmoji, setEditGroupEmoji] = useState('beer');
 
   const addNewGroup = () => {
     if (newGroupName.trim()) {
       const today = new Date();
-      const formattedDate = `${today.getDate()}/${today.getMonth() + 1}/${today.getFullYear().toString().slice(-2)}`;
+      const day = today.getDate();
+      const month = today.getMonth() + 1;
+      const year = today.getFullYear();
+      const formattedDate = `${day}/${month}/${year}`;
       
-      addGroup(newGroupName.trim(), formattedDate);
+      addGroup(newGroupName.trim(), formattedDate, newGroupEmoji);
       setNewGroupName('');
+      setNewGroupEmoji('beer');
       setModalVisible(false);
     }
   };
@@ -38,13 +66,15 @@ export default function GroupsScreen({ navigation }) {
   const openEditGroup = (group) => {
     setEditingGroup(group);
     setEditGroupName(group.name);
+    setEditGroupEmoji(group.emoji || 'beer');
   };
 
   const saveEditGroup = () => {
     if (editGroupName.trim() && editingGroup) {
-      updateGroupName(editingGroup.id, editGroupName.trim());
+      updateGroupName(editingGroup.id, editGroupName.trim(), editGroupEmoji);
       setEditingGroup(null);
       setEditGroupName('');
+      setEditGroupEmoji('beer');
     }
   };
 
@@ -71,12 +101,12 @@ export default function GroupsScreen({ navigation }) {
         </TouchableOpacity>
         
         <TouchableOpacity
-          style={[styles.swipeAction, styles.deleteAction, { backgroundColor: theme.error }]}
+          style={[styles.swipeAction, styles.deleteAction, { backgroundColor: theme.warningContainer }]}
           onPress={() => deleteGroup(item.id)}
           activeOpacity={0.9}
         >
-          <Text style={[styles.swipeActionIcon, { color: theme.onError }]}>×</Text>
-          <Text style={[styles.swipeActionText, { color: theme.onError }]}>Delete</Text>
+          <Text style={[styles.swipeActionIcon, { color: theme.onWarning }]}>×</Text>
+          <Text style={[styles.swipeActionText, { color: theme.onWarning }]}>Delete</Text>
         </TouchableOpacity>
       </Animated.View>
     );
@@ -91,14 +121,31 @@ export default function GroupsScreen({ navigation }) {
       containerStyle={styles.swipeableContainer}
     >
       <TouchableOpacity
-        style={[styles.groupItem, { backgroundColor: theme.surfaceContainerHighest || theme.surfaceVariant, borderColor: theme.outlineVariant }]}
+        style={[styles.groupItem, { backgroundColor: theme.surfaceContainer || theme.surfaceVariant }]}
         onPress={() => navigation.navigate('GroupDetail', { group: item })}
+        activeOpacity={0.7}
       >
-        <View style={styles.groupInfo}>
-          <Text style={[styles.groupName, { color: theme.onSurface }]}>{item.name}</Text>
-          <Text style={[styles.groupDate, { color: theme.onSurfaceVariant }]}>{item.date}</Text>
+        <View style={styles.groupMainRow}>
+          <View style={[styles.groupIconContainer, { backgroundColor: theme.primaryContainer }]}>
+            <GroupIcon iconId={item.emoji || 'beer'} size={40} color={theme.primary} />
+          </View>
+          <View style={styles.groupInfo}>
+            <Text style={[styles.groupName, { color: theme.textPrimary }]}>{item.name}</Text>
+            <Text style={[styles.groupDate, { color: theme.textSecondary }]}>{item.date}</Text>
+            {item.people && item.people.length > 0 && (
+              <View style={styles.peoplePills}>
+                {item.people.map((person) => (
+                  <View key={person.id} style={[styles.personPill, { backgroundColor: theme.surfaceContainerHigh }]}>
+                    <Text style={[styles.personPillText, { color: theme.textSecondary }]}>{person.name}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+          <View style={styles.groupTotalContainer}>
+            <Text style={[styles.groupTotal, { color: theme.primary }]}>{item.total.toFixed(0)}{currencySymbol}</Text>
+          </View>
         </View>
-        <Text style={[styles.groupTotal, { color: theme.primary }]}>{currencySymbol}{item.total.toFixed(2)}</Text>
       </TouchableOpacity>
     </Swipeable>
   );
@@ -106,12 +153,12 @@ export default function GroupsScreen({ navigation }) {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
       <View style={[styles.header, { backgroundColor: theme.background }]}>
-        <Text style={[styles.title, { color: theme.onBackground }]}>Groups</Text>
+        <Text style={[styles.title, { color: theme.textPrimary }]}>Groups</Text>
         <TouchableOpacity 
-          style={[styles.settingsButton, { backgroundColor: theme.primaryContainer }]}
+          style={[styles.settingsButton, { backgroundColor: theme.surfaceContainer }]}
           onPress={() => navigation.navigate('Settings')}
         >
-          <Text style={[styles.settingsIcon, { color: theme.primary }]}>⚙</Text>
+          <Ionicons name="settings-sharp" size={24} color={theme.primary} />
         </TouchableOpacity>
       </View>
 
@@ -126,7 +173,7 @@ export default function GroupsScreen({ navigation }) {
         style={[styles.addButton, { backgroundColor: theme.primary, shadowColor: theme.primary }]}
         onPress={() => setModalVisible(true)}
       >
-        <Text style={[styles.addButtonText, { color: theme.onPrimary }]}>+</Text>
+        <Text style={[styles.addButtonText, { color: theme.onPrimary }]}>+ Add Group</Text>
       </TouchableOpacity>
 
       <Modal
@@ -137,11 +184,33 @@ export default function GroupsScreen({ navigation }) {
       >
         <View style={styles.modalContainer}>
           <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]}>
-            <Text style={[styles.modalTitle, { color: theme.onSurface }]}>New Group</Text>
+            <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>New Group</Text>
+            
+            <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Icon</Text>
+            <View style={styles.emojiSelector}>
+              {ICON_OPTIONS.map((icon) => (
+                <TouchableOpacity
+                  key={icon.id}
+                  style={[
+                    styles.emojiOption,
+                    { 
+                      borderColor: theme.outline,
+                      backgroundColor: newGroupEmoji === icon.id ? theme.primaryContainer : theme.surfaceContainerHigh 
+                    },
+                    newGroupEmoji === icon.id && { borderColor: theme.primary }
+                  ]}
+                  onPress={() => setNewGroupEmoji(icon.id)}
+                >
+                  <GroupIcon iconId={icon.id} size={28} color={newGroupEmoji === icon.id ? theme.primary : theme.textSecondary} />
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Group Name</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surface, color: theme.onSurface }]}
+              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surface, color: theme.textPrimary }]}
               placeholder="Group name"
-              placeholderTextColor={theme.onSurfaceVariant}
+              placeholderTextColor={theme.textSecondary}
               value={newGroupName}
               onChangeText={setNewGroupName}
               autoFocus
@@ -152,6 +221,7 @@ export default function GroupsScreen({ navigation }) {
                 onPress={() => {
                   setModalVisible(false);
                   setNewGroupName('');
+                  setNewGroupEmoji('beer');
                 }}
               >
                 <Text style={[styles.cancelButtonText, { color: theme.primary }]}>Cancel</Text>
@@ -175,15 +245,38 @@ export default function GroupsScreen({ navigation }) {
         onRequestClose={() => {
           setEditingGroup(null);
           setEditGroupName('');
+          setEditGroupEmoji('beer');
         }}
       >
         <View style={styles.modalContainer}>
           <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]}>
-            <Text style={[styles.modalTitle, { color: theme.onSurface }]}>Edit Group</Text>
+            <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Edit Group</Text>
+            
+            <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Icon</Text>
+            <View style={styles.emojiSelector}>
+              {ICON_OPTIONS.map((icon) => (
+                <TouchableOpacity
+                  key={icon.id}
+                  style={[
+                    styles.emojiOption,
+                    { 
+                      borderColor: theme.outline,
+                      backgroundColor: editGroupEmoji === icon.id ? theme.primaryContainer : theme.surfaceContainerHigh 
+                    },
+                    editGroupEmoji === icon.id && { borderColor: theme.primary }
+                  ]}
+                  onPress={() => setEditGroupEmoji(icon.id)}
+                >
+                  <GroupIcon iconId={icon.id} size={28} color={editGroupEmoji === icon.id ? theme.primary : theme.textSecondary} />
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Group Name</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surface, color: theme.onSurface }]}
+              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surface, color: theme.textPrimary }]}
               placeholder="Group name"
-              placeholderTextColor={theme.onSurfaceVariant}
+              placeholderTextColor={theme.textSecondary}
               value={editGroupName}
               onChangeText={setEditGroupName}
               autoFocus
@@ -194,6 +287,7 @@ export default function GroupsScreen({ navigation }) {
                 onPress={() => {
                   setEditingGroup(null);
                   setEditGroupName('');
+                  setEditGroupEmoji('beer');
                 }}
               >
                 <Text style={[styles.cancelButtonText, { color: theme.primary }]}>Cancel</Text>
@@ -221,79 +315,134 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 24,
-    paddingTop: 16,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 16,
     backgroundColor: '#FEF7FF',
   },
   title: {
-    fontSize: 36,
-    fontWeight: '700',
+    fontFamily: 'Ysabeau-Bold',
+    fontSize: 32,
+    fontWeight: '800',
     color: '#1C1B1F',
-    letterSpacing: 0.5,
+    letterSpacing: -0.5,
   },
   settingsButton: {
-    padding: 12,
-    backgroundColor: '#E8DEF8',
-    borderRadius: 20,
-  },
-  settingsIcon: {
-    fontSize: 24,
-    color: '#6750A4',
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#00000010',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   listContainer: {
     padding: 16,
+    paddingBottom: 100,
   },
   groupItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
     padding: 20,
     backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: 'transparent',
+    borderRadius: 20,
+    borderWidth: 0,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+    minHeight: 88,
+  },
+  groupMainRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  groupIconContainer: {
+    width: 64,
+    height: 64,
+    marginRight: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 16,
+    // backgroundColor applied inline from theme
   },
   groupInfo: {
     flex: 1,
   },
   groupName: {
-    fontSize: 22,
-    fontWeight: '600',
-    marginBottom: 6,
+    fontFamily: 'Ysabeau-Bold',
+    fontSize: 19,
+    fontWeight: '700',
+    marginBottom: 5,
     color: '#1C1B1F',
     letterSpacing: 0.15,
   },
   groupDate: {
-    fontSize: 14,
+    fontFamily: 'Ysabeau-Regular',
+    fontSize: 13,
     color: '#49454F',
     letterSpacing: 0.25,
     fontWeight: '500',
+    marginBottom: 11,
+  },
+  groupTotalContainer: {
+    marginLeft: 8,
+    alignItems: 'flex-end',
   },
   groupTotal: {
+    fontFamily: 'Ysabeau-Bold',
     fontSize: 22,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#6750A4',
+  },
+  peoplePills: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 2,
+  },
+  personPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: '#E8DEF8',
+  },
+  personPillText: {
+    fontFamily: 'Ysabeau-SemiBold',
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#49454F',
+    letterSpacing: 0.4,
   },
   addButton: {
     position: 'absolute',
-    bottom: 30,
-    alignSelf: 'center',
-    width: 80,
-    height: 80,
+    bottom: 24,
+    left: 20,
+    right: 20,
+    height: 56,
     borderRadius: 28,
     backgroundColor: '#6750A4',
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 6,
     shadowColor: '#6750A4',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 8,
   },
   addButtonText: {
-    fontSize: 40,
+    fontFamily: 'Ysabeau-Bold',
+    fontSize: 16,
     color: '#FFFFFF',
-    fontWeight: '600',
+    fontWeight: '700',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   modalContainer: {
     flex: 1,
@@ -302,35 +451,58 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   modalContent: {
-    width: '85%',
+    width: '88%',
     backgroundColor: '#FFFBFE',
-    borderRadius: 28,
+    borderRadius: 24,
     padding: 24,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
-      height: 8,
+      height: 12,
     },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 12,
   },
   modalTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    marginBottom: 24,
+    fontFamily: 'Ysabeau-Bold',
+    fontSize: 24,
+    fontWeight: '800',
+    marginBottom: 20,
     color: '#1C1B1F',
-    letterSpacing: 0.5,
+    letterSpacing: -0.3,
+  },
+  inputLabel: {
+    fontFamily: 'Ysabeau-Bold',
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 10,
+    marginTop: 4,
+    color: '#49454F',
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+  },
+  emojiSelector: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  emojiOption: {
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   input: {
+    fontFamily: 'Ysabeau-Regular',
     borderWidth: 1,
-    borderColor: '#79747E',
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
     marginBottom: 24,
-    backgroundColor: '#FFFFFF',
-    color: '#1C1B1F',
   },
   modalButtons: {
     flexDirection: 'row',
@@ -344,59 +516,60 @@ const styles = StyleSheet.create({
     marginHorizontal: 6,
   },
   cancelButton: {
-    backgroundColor: '#E8DEF8',
+    // backgroundColor applied inline from theme
   },
   cancelButtonText: {
+    fontFamily: 'Ysabeau-SemiBold',
     fontSize: 16,
     fontWeight: '600',
-    color: '#6750A4',
     letterSpacing: 0.5,
   },
   createButton: {
-    backgroundColor: '#6750A4',
+    // backgroundColor applied inline from theme
   },
   createButtonText: {
+    fontFamily: 'Ysabeau-SemiBold',
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
     letterSpacing: 0.5,
   },
   swipeableContainer: {
-    marginBottom: 16,
+    marginBottom: 14,
   },
   swipeActionsContainer: {
     flexDirection: 'row',
     alignItems: 'stretch',
     justifyContent: 'flex-end',
-    paddingLeft: 10,
+    paddingLeft: 8,
   },
   swipeAction: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 80,
+    width: 75,
     height: '100%',
+    borderRadius: 16,
+    marginLeft: 4,
   },
   editAction: {
     backgroundColor: '#6750A4',
-    marginRight: 6,
-    borderRadius: 16,
   },
   deleteAction: {
     backgroundColor: '#BA1A1A',
-    borderRadius: 16,
   },
   swipeActionIcon: {
-    fontSize: 24,
-    fontWeight: '400',
+    fontFamily: 'Ysabeau-Bold',
+    fontSize: 22,
+    fontWeight: '700',
     color: '#FFFFFF',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   swipeActionText: {
+    fontFamily: 'Ysabeau-Bold',
     color: '#FFFFFF',
-    fontWeight: '600',
-    fontSize: 11,
-    textTransform: 'lowercase',
-    letterSpacing: 0.5,
+    fontWeight: '700',
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
 
 });
