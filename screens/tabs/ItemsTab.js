@@ -8,7 +8,9 @@ import {
   TextInput,
   Modal,
   Animated,
+  KeyboardAvoidingView,
 } from 'react-native';
+import { Platform } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useGroups } from '../../context/GroupsContext';
@@ -235,7 +237,11 @@ export default function ItemsTab({ route }) {
   );
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
+    <KeyboardAvoidingView
+      style={[styles.container, { backgroundColor: theme.background }]}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 80}
+    >
       <>
         <View style={[styles.listHeader, { backgroundColor: theme.surfaceContainerHigh }]}>
           <Text style={[styles.headerNumber, { color: theme.primary }]}>#</Text>
@@ -294,7 +300,11 @@ export default function ItemsTab({ route }) {
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalContainer}>
+        <KeyboardAvoidingView
+          style={styles.modalContainer}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 80}
+        >
           <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]}>
             <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Add Item</Text>
 
@@ -337,7 +347,7 @@ export default function ItemsTab({ route }) {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Edit Item Modal */}
@@ -351,7 +361,11 @@ export default function ItemsTab({ route }) {
           setEditItemPrice('');
         }}
       >
-        <View style={styles.modalContainer}>
+        <KeyboardAvoidingView
+          style={styles.modalContainer}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 80}
+        >
           <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]}>
             <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Edit Item</Text>
 
@@ -394,7 +408,7 @@ export default function ItemsTab({ route }) {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Multiplier Modal */}
@@ -408,7 +422,11 @@ export default function ItemsTab({ route }) {
           setMultiplierValue('');
         }}
       >
-        <View style={styles.modalContainer}>
+        <KeyboardAvoidingView
+          style={styles.modalContainer}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 80}
+        >
           <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]}>
             <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Set Quantity</Text>
 
@@ -461,9 +479,9 @@ export default function ItemsTab({ route }) {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 const styles = StyleSheet.create({
