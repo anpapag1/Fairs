@@ -5,110 +5,95 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Switch,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
 import { useCurrency } from '../context/CurrencyContext';
 import { useTheme } from '../context/ThemeContext';
+import { MAIN, ACCENT } from '../context/ThemeContext';
 
 export default function SettingsScreen({ navigation }) {
   const { currencyCode, setCurrencyCode, currencies } = useCurrency();
-  const { theme, isDark, themeMode, setThemeMode } = useTheme();
+  const { theme, themeMode, setThemeMode } = useTheme();
+
+  const themeOptions = [
+    { id: 'light',  label: 'Light',  icon: 'sunny'               },
+    { id: 'dark',   label: 'Dark',   icon: 'moon'                },
+    { id: 'system', label: 'System', icon: 'phone-portrait-outline' },
+  ];
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
-      <View style={[styles.header, { backgroundColor: theme.background }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={[styles.backButton, { backgroundColor: theme.surfaceContainer }]}>
-          <Text style={[styles.backArrow, { color: theme.primary }]}>←</Text>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['bottom']}>
+      <StatusBar backgroundColor={MAIN} barStyle="light-content" />
+
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="chevron-back" size={26} color="#FFFFFF" />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: theme.onBackground }]}>Settings</Text>
-        <View style={styles.placeholder} />
+        <Text style={styles.headerTitle}>Settings</Text>
+        <View style={styles.headerRight} />
       </View>
 
-      <ScrollView style={styles.content}>
-        {/* Theme Section */}
+      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
+
+        {/* Appearance */}
         <View style={[styles.section, { backgroundColor: theme.surfaceVariant, shadowColor: theme.shadow }]}>
           <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Appearance</Text>
           <Text style={[styles.sectionDescription, { color: theme.textSecondary }]}>
             Choose your preferred theme
           </Text>
-          
+
           <View style={styles.themeOptions}>
-            <TouchableOpacity
-              style={[
-                styles.themeOption,
-                { borderColor: theme.outline },
-                themeMode === 'light' && { backgroundColor: theme.primaryContainer, borderColor: theme.primary }
-              ]}
-              onPress={() => setThemeMode('light')}
-            >
-              <Ionicons 
-                name="sunny" 
-                size={28} 
-                color={themeMode === 'light' ? theme.primary : theme.textSecondary}
-              />
-              <Text style={[
-                styles.themeOptionText,
-                { color: theme.textSecondary },
-                themeMode === 'light' && { color: theme.primary, fontWeight: '700', fontFamily: 'Ysabeau-Bold' }
-              ]}>Light</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.themeOption,
-                { borderColor: theme.outline },
-                themeMode === 'dark' && { backgroundColor: theme.primaryContainer, borderColor: theme.primary }
-              ]}
-              onPress={() => setThemeMode('dark')}
-            >
-              <Ionicons 
-                name="moon" 
-                size={28} 
-                color={themeMode === 'dark' ? theme.primary : theme.textSecondary}
-              />
-              <Text style={[
-                styles.themeOptionText,
-                { color: theme.textSecondary },
-                themeMode === 'dark' && { color: theme.primary, fontWeight: '700', fontFamily: 'Ysabeau-Bold' }
-              ]}>Dark</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                styles.themeOption,
-                { borderColor: theme.outline },
-                themeMode === 'system' && { backgroundColor: theme.primaryContainer, borderColor: theme.primary }
-              ]}
-              onPress={() => setThemeMode('system')}
-            >
-              <Ionicons 
-                name="phone-portrait-outline" 
-                size={28} 
-                color={themeMode === 'system' ? theme.primary : theme.textSecondary}
-              />
-              <Text style={[
-                styles.themeOptionText,
-                { color: theme.textSecondary },
-                themeMode === 'system' && { color: theme.primary, fontWeight: '700', fontFamily: 'Ysabeau-Bold' }
-              ]}>System</Text>
-            </TouchableOpacity>
+            {themeOptions.map(opt => {
+              const isActive = themeMode === opt.id;
+              return (
+                <TouchableOpacity
+                  key={opt.id}
+                  style={[
+                    styles.themeOption,
+                    { borderColor: theme.outline, backgroundColor: theme.surfaceContainerHigh },
+                    isActive && { backgroundColor: theme.primaryContainer, borderColor: MAIN },
+                  ]}
+                  onPress={() => setThemeMode(opt.id)}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons
+                    name={opt.icon}
+                    size={26}
+                    color={isActive ? MAIN : theme.textSecondary}
+                  />
+                  <Text style={[
+                    styles.themeOptionText,
+                    { color: isActive ? MAIN : theme.textSecondary },
+                    isActive && { fontFamily: 'Ysabeau-Bold', fontWeight: '700' },
+                  ]}>
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
 
-        {/* Currency Section */}
+        {/* Currency */}
         <View style={[styles.section, { backgroundColor: theme.surfaceVariant, shadowColor: theme.shadow }]}>
           <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Currency</Text>
           <Text style={[styles.sectionDescription, { color: theme.textSecondary }]}>
             Select your preferred currency for displaying amounts
           </Text>
-          <View style={[styles.pickerContainer, { backgroundColor: theme.surfaceContainer }]}>
+          <View style={[styles.pickerContainer, { backgroundColor: theme.surfaceContainer, borderColor: theme.outline }]}>
             <Picker
               selectedValue={currencyCode}
               onValueChange={(itemValue) => setCurrencyCode(itemValue)}
               style={[styles.picker, { color: theme.textPrimary }]}
+              dropdownIconColor={theme.textSecondary}
             >
               {currencies.map((currency) => (
                 <Picker.Item
@@ -120,6 +105,7 @@ export default function SettingsScreen({ navigation }) {
             </Picker>
           </View>
         </View>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -128,91 +114,81 @@ export default function SettingsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FEF7FF',
   },
+
+  // ── Header ──────────────────────────────────────────────
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 24,
-    paddingTop: 16,
-    backgroundColor: '#FEF7FF',
+    backgroundColor: MAIN,
+    paddingHorizontal: 12,
+    paddingTop: 30,
+    paddingBottom: 14,
+    gap: 8,
   },
   backButton: {
-    padding: 8,
-    backgroundColor: '#E8DEF8',
+    width: 40,
+    height: 40,
     borderRadius: 20,
-    width: 50,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.15)',
   },
-  backArrow: {
-    fontFamily: 'Ysabeau-SemiBold',
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#6750A4',
-  },
-  title: {
+  headerTitle: {
+    flex: 1,
     fontFamily: 'Ysabeau-Bold',
-    fontSize: 36,
+    fontSize: 22,
     fontWeight: '700',
-    color: '#1C1B1F',
-    letterSpacing: 0.5,
+    color: '#FFFFFF',
+    letterSpacing: 0.2,
   },
-  placeholder: {
-    width: 48,
+  headerRight: {
+    width: 40,
   },
+
+  // ── Content ──────────────────────────────────────────────
   content: {
     flex: 1,
   },
+  contentContainer: {
+    paddingVertical: 16,
+    paddingBottom: 32,
+  },
+
+  // ── Section card ─────────────────────────────────────────
   section: {
-    padding: 24,
-    margin: 16,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.08,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 20,
+    padding: 22,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.10,
     shadowRadius: 12,
     elevation: 3,
   },
   sectionTitle: {
     fontFamily: 'Ysabeau-Bold',
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: '700',
-    marginBottom: 8,
-    color: '#1C1B1F',
-    letterSpacing: 0.15,
+    marginBottom: 6,
+    letterSpacing: 0.1,
   },
   sectionDescription: {
     fontFamily: 'Ysabeau-Regular',
     fontSize: 14,
-    color: '#49454F',
-    marginBottom: 24,
-    fontWeight: '400',
-    letterSpacing: 0.25,
+    marginBottom: 20,
     lineHeight: 20,
+    letterSpacing: 0.2,
   },
-  pickerContainer: {
-    borderWidth: 1,
-    borderColor: '#79747E',
-    borderRadius: 16,
-    backgroundColor: '#FFFFFF',
-  },
-  picker: {
-    height: 50,
-  },
+
+  // ── Theme selector ───────────────────────────────────────
   themeOptions: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 10,
   },
   themeOption: {
     flex: 1,
-    padding: 16,
-    paddingVertical: 20,
+    paddingVertical: 18,
     borderWidth: 2,
     borderRadius: 16,
     alignItems: 'center',
@@ -221,8 +197,19 @@ const styles = StyleSheet.create({
   },
   themeOptionText: {
     fontFamily: 'Ysabeau-Regular',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '500',
-    letterSpacing: 0.5,
+    letterSpacing: 0.4,
+  },
+
+  // ── Currency picker ──────────────────────────────────────
+  pickerContainer: {
+    borderWidth: 1,
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
+  picker: {
+    height: 52,
   },
 });
+

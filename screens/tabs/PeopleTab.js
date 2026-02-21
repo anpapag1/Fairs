@@ -14,6 +14,7 @@ import { Swipeable } from 'react-native-gesture-handler';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useGroups } from '../../context/GroupsContext';
 import { useTheme } from '../../context/ThemeContext';
+import { ACCENT } from '../../context/ThemeContext';
 
 export default function PeopleTab({ route }) {
   const { group } = route.params;
@@ -22,7 +23,7 @@ export default function PeopleTab({ route }) {
   const { theme } = useTheme();
   
   const currentGroup = getGroup(group.id);
-  const [splitMode, setSplitMode] = useState(currentGroup?.splitMode || 'equal'); // 'equal' or 'separate'
+  const [splitMode, setSplitMode] = useState(currentGroup?.splitMode || 'separate'); // 'equal' or 'separate'
   const [numberOfPeople, setNumberOfPeople] = useState('');
   const [people, setPeople] = useState(currentGroup?.people || []);
   const [modalVisible, setModalVisible] = useState(false);
@@ -286,7 +287,7 @@ export default function PeopleTab({ route }) {
         ]}
       >
         <TouchableOpacity
-          style={[styles.swipeAction, { backgroundColor: theme.primary }]}
+          style={[styles.swipeAction, { backgroundColor: ACCENT }]}
           onPress={() => {
             openEditPerson(item);
             swipeableRefs.current[item.id]?.close();
@@ -328,10 +329,11 @@ export default function PeopleTab({ route }) {
       rightThreshold={40}
       containerStyle={styles.swipeableContainer}
       >
+      <View style={{ position: 'relative' }}>
       <TouchableOpacity
         style={[
         styles.personItem,
-        { backgroundColor: theme.surfaceContainer || theme.surfaceVariant, borderColor: theme.outlineVariant },
+        { backgroundColor: theme.surface || theme.surfaceVariant, borderColor: theme.outlineVariant },
         item.isPaid && { opacity: 0.65 }
         ]}
         onPress={() => openItemSelection(item)}
@@ -366,12 +368,15 @@ export default function PeopleTab({ route }) {
           </Text>
         )}
         </View>
-        <View style={[styles.personAmountContainer, { backgroundColor: item.isPaid ? theme.success : theme.primary }]}>
-        <Text style={[styles.personAmount, { color: item.isPaid ? theme.textSecondary : theme.textPrimary }]}>
+        <View style={[styles.personAmountContainer, { backgroundColor: item.isPaid ? theme.success : ACCENT }]}>
+        <Text style={[styles.personAmount, { color: theme.onPrimary }]}>
           {currencySymbol}{amount.toFixed(2)}
         </Text>
         </View>
       </TouchableOpacity>
+      <View style={[styles.swipeHintLeft, { backgroundColor: theme.outlineVariant }]} />
+      <View style={[styles.swipeHintRight, { backgroundColor: theme.outlineVariant }]} />
+      </View>
       </Swipeable>
     );
   };
@@ -420,37 +425,29 @@ export default function PeopleTab({ route }) {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={[styles.splitModeContainer, { backgroundColor: theme.background, borderBottomColor: theme.outlineVariant }]}>
-        <Text style={[styles.sectionTitle, { color: theme.textPrimary }]}>Split Mode</Text>
+      <View style={styles.splitModeContainer}>
+        <Text style={styles.sectionTitle}>Split Mode:</Text>
         <View style={styles.splitModeButtons}>
           <TouchableOpacity
             style={[
               styles.splitModeButton,
-              { borderColor: theme.primary, backgroundColor: splitMode === 'equal' ? theme.surfaceContainer : 'transparent' }
+              splitMode === 'separate' ? styles.splitModeButtonActive : styles.splitModeButtonInactive,
             ]}
-            onPress={() => setSplitMode('equal')}
+            onPress={() => setSplitMode('separate')}
+            activeOpacity={0.7}
           >
-            <Text style={[
-              styles.splitModeButtonText,
-              { color: splitMode === 'equal' ? theme.textPrimary : theme.textSecondary }
-            ]}>
-              Equal Split
-            </Text>
+            <Text style={styles.splitModeButtonText}>Separate</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={[
               styles.splitModeButton,
-              { borderColor: theme.primary, backgroundColor: splitMode === 'separate' ? theme.surfaceContainer : 'transparent' }
+              splitMode === 'equal' ? styles.splitModeButtonActive : styles.splitModeButtonInactive,
             ]}
-            onPress={() => setSplitMode('separate')}
+            onPress={() => setSplitMode('equal')}
+            activeOpacity={0.7}
           >
-            <Text style={[
-              styles.splitModeButtonText,
-              { color: splitMode === 'separate' ? theme.textPrimary : theme.textSecondary }
-            ]}>
-              Separate Split
-            </Text>
+            <Text style={styles.splitModeButtonText}>Equal</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -540,7 +537,7 @@ export default function PeopleTab({ route }) {
           )}
 
           <TouchableOpacity
-            style={[styles.addPersonButton, { backgroundColor: theme.primary }]}
+            style={[styles.addPersonButton, { backgroundColor: ACCENT }]}
             onPress={() => setModalVisible(true)}
           >
             <Text style={[styles.addPersonButtonText, { color: theme.onPrimary }]}>+ Add Person</Text>
@@ -688,47 +685,46 @@ export default function PeopleTab({ route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FEF7FF',
+    backgroundColor: 'transparent',
   },
   splitModeContainer: {
-    padding: 24,
-    backgroundColor: '#FFFBFE',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E8DEF8',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#B953D3',
   },
   sectionTitle: {
-    fontFamily: 'Ysabeau-Bold',
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 16,
-    color: '#1C1B1F',
-    letterSpacing: 0.15,
-  },
-  splitModeButtons: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  splitModeButton: {
-    flex: 1,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#6750A4',
-    borderRadius: 20,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-  },
-  splitModeButtonActive: {
-    backgroundColor: '#6750A4',
-  },
-  splitModeButtonText: {
     fontFamily: 'Ysabeau-SemiBold',
     fontSize: 16,
     fontWeight: '600',
-    color: '#6750A4',
-    letterSpacing: 0.5,
-  },
-  splitModeButtonTextActive: {
     color: '#FFFFFF',
+    marginRight: 12,
+    letterSpacing: 0.2,
+  },
+  splitModeButtons: {
+    flex: 1,
+    flexDirection: 'row',
+    gap: 8,
+  },
+  splitModeButton: {
+    flex: 1,
+    paddingVertical: 7,
+    borderRadius: 20,
+    alignItems: 'center',
+  },
+  splitModeButtonActive: {
+    backgroundColor: ACCENT,
+  },
+  splitModeButtonInactive: {
+    backgroundColor: 'rgba(255,255,255,0.20)',
+  },
+  splitModeButtonText: {
+    fontFamily: 'Ysabeau-SemiBold',
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
   },
   equalSplitContainer: {
     padding: 24,
@@ -758,7 +754,7 @@ const styles = StyleSheet.create({
   totalAmount: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#6750A4',
+    color: '#B953D3',
   },
   peopleInputContainer: {
     marginBottom: 24,
@@ -779,16 +775,16 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderWidth: 1,
-    borderColor: '#6750A4',
+    borderColor: '#B953D3',
     borderRadius: 16,
-    backgroundColor: '#E8DEF8',
+    backgroundColor: '#B953D3',
     justifyContent: 'center',
     alignItems: 'center',
   },
   counterButtonText: {
     fontSize: 28,
     fontWeight: '600',
-    color: '#6750A4',
+    color: '#FFFFFF',
   },
   peopleInput: {
     flex: 1,
@@ -807,7 +803,7 @@ const styles = StyleSheet.create({
     padding: 24,
     borderRadius: 24,
     alignItems: 'center',
-    backgroundColor: '#6750A4',
+    backgroundColor: 'transparent',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -884,6 +880,24 @@ const styles = StyleSheet.create({
   swipeableContainer: {
     marginBottom: 16,
   },
+  swipeHintLeft: {
+    position: 'absolute',
+    left: 4,
+    top: '50%',
+    transform: [{ translateY: -16 }],
+    width: 5,
+    height: 32,
+    borderRadius: 4,
+  },
+  swipeHintRight: {
+    position: 'absolute',
+    right: 4,
+    top: '50%',
+    transform: [{ translateY: -16 }],
+    width: 5,
+    height: 32,
+    borderRadius: 4,
+  },
   swipeLeftActionsContainer: {
     flexDirection: 'row',
     alignItems: 'stretch',
@@ -914,7 +928,7 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   editAction: {
-    backgroundColor: '#6750A4',
+    backgroundColor: '#56026B',
   },
   deleteAction: {
     backgroundColor: '#BA1A1A',
@@ -937,15 +951,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent',
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#E8DEF8',
+    borderColor: 'rgba(0,0,0,0.1)',
   },
   personItemPaid: {
-    backgroundColor: '#E8F5E9',
-    borderColor: '#81C784',
-    opacity: 0.85,
+    opacity: 0.65,
   },
   personInfo: {
     flex: 1,
@@ -1026,9 +1038,9 @@ const styles = StyleSheet.create({
     right: 20,
     padding: 20,
     borderRadius: 28,
-    backgroundColor: '#6750A4',
+    backgroundColor: '#B953D3',
     alignItems: 'center',
-    shadowColor: '#6750A4',
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 4,
@@ -1052,7 +1064,7 @@ const styles = StyleSheet.create({
   modalContent: {
     width: '85%',
     maxHeight: '80%',
-    backgroundColor: '#FFFBFE',
+    backgroundColor: 'transparent',
     borderRadius: 28,
     padding: 24,
     shadowColor: '#000',
@@ -1094,16 +1106,16 @@ const styles = StyleSheet.create({
     marginHorizontal: 6,
   },
   cancelButton: {
-    backgroundColor: '#E8DEF8',
+    backgroundColor: 'transparent',
   },
   cancelButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#6750A4',
+    color: '#B953D3',
     letterSpacing: 0.5,
   },
   createButton: {
-    backgroundColor: '#6750A4',
+    backgroundColor: '#B953D3',
   },
   createButtonText: {
     fontSize: 16,
@@ -1175,7 +1187,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#E8DEF8',
+    backgroundColor: 'rgba(0,0,0,0.1)',
     marginVertical: 8,
   },
   noItemsContainer: {
@@ -1197,10 +1209,10 @@ const styles = StyleSheet.create({
     margin: 20,
     marginTop: 12,
     padding: 20,
-    backgroundColor: '#6750A4',
+    backgroundColor: '#B953D3',
     borderRadius: 24,
     alignItems: 'center',
-    shadowColor: '#6750A4',
+    shadowColor: '#000',
     shadowOffset: {
       width: 0,
       height: 4,

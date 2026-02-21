@@ -6,91 +6,107 @@ const ThemeContext = createContext();
 
 const THEME_STORAGE_KEY = '@fairs_theme';
 
-// Simplified Color Tokens
-export const lightTheme = {
-  // Primary
-  primary: '#8c00ffff',
-  onPrimary: '#FFFFFF',
-  primaryContainer: '#c6a5fcff',
-  
-  // Success
-  success: '#198754',
-  onSuccess: '#FFFFFF',
-  successContainer: '#E8F5E9',
-  onSuccessContainer: '#198754',
-  
-  // Warning 
-  warning: '#ff9900ff',
-  onWarning: '#FFFFFF',
-  warningContainer: '#e74634',
-  onWarningContainer: '#000000ff',
-  
-  // Background
-  background: '#e6d8e7ff',
-  onBackground: '#1C1B1F',
-  
-  // Surface
-  surface: '#dbc4eeff',
-  onSurface: '#000000ff',
-  surfaceVariant: '#d6bcffff',
-  onSurfaceVariant: '#0000007c',
-  surfaceContainer: '#dbc4eeff',
-  surfaceContainerHigh: '#00000030',
-  
-  // Outline
-  outline: '#79747E',
-  outlineVariant: '#CAC4D0',
+// ─────────────────────────────────────────────────────────────
+// Brand constants — fixed regardless of light/dark mode
+// ─────────────────────────────────────────────────────────────
+export const MAIN       = '#B953D3';
+export const ACCENT     = '#56026B';
+export const SEARCH_BAR = '#CA95D7';
+export const DONE       = '#7FB57F';
 
-  // Text
-  textPrimary: '#000000',
-  textSecondary: '#0000007a',
-  textDisabled: '#79747E',
-  
-  // Other
-  shadow: '#000000',
-};
+// ─────────────────────────────────────────────────────────────
+// All tokens derived from the Figma design palette (Mode 1)
+// MAIN = #B953D3  |  ACCENT = #56026B  |  DONE = #7FB57F
+// ─────────────────────────────────────────────────────────────
 
 export const darkTheme = {
-  // Primary
-  primary: '#ac47ffff',
-  onPrimary: '#FFFFFF',
-  primaryContainer: '#c6a5fcff',
-  
-  // Success
-  success: '#198754',
-  onSuccess: '#FFFFFF',
-  successContainer: '#E8F5E9',
-  onSuccessContainer: '#198754',
-  
-  // Warning 
-  warning: '#ff9900ff',
-  onWarning: '#FFFFFF',
-  warningContainer: '#e74634',
-  onWarningContainer: '#000000ff',
-  
-  // Background
-  background: '#2D1B3D',
-  onBackground: '#d9d9daff',
-  
-  // Surface
-  surface: '#473755',
-  onSurface: '#000000ff',
-  surfaceVariant: '#653b86ff',
-  onSurfaceVariant: '#0000007c',
-  surfaceContainer: '#473755',
-  surfaceContainerHigh: '#00000030',
+  // Brand (same in both modes)
+  main:                 '#B953D3',
+  accent:               '#56026B',
+  searchBar:            '#CA95D7',
+  done:                 '#7FB57F',
+  primary:              '#B953D3',   // MAIN — used for accent text, active states
+  onPrimary:            '#FFFFFF',
+  primaryContainer:     '#B594BD',   // DARK.MAIN_VAR — icon container backgrounds
 
-  // Outline
-  outline: '#3c3742ff',
-  outlineVariant: '#553972ff',
+  // Backgrounds
+  background:           '#2C1631',   // DARK.BG — screen background
+  onBackground:         '#FFFFFF',
+  surface:              '#875f8d',   // DARK.MAIN_VAR_SEC — cards, list rows
+  onSurface:            '#FFFFFF',
+
+  // Containers / variants
+  surfaceVariant:       '#3D2048',   // Slightly lighter than BG — sections, modal bg
+  onSurfaceVariant:     'rgba(255,255,255,0.70)',
+  surfaceContainer:     '#3A1D45',   // List headers, segmented areas
+  surfaceContainerHigh: 'rgba(255,255,255,0.10)', // Filter chip bg, subtle fills
+
+  // Borders
+  outline:              'rgba(255,255,255,0.22)',
+  outlineVariant:       'rgba(255,255,255,0.10)',
 
   // Text
-  textPrimary: '#ffffffff',
-  textSecondary: '#ffffff7a',
-  textDisabled: '#79747E',
-  
-  // Other
-  shadow: '#000000',
+  textPrimary:          '#FFFFFF',
+  textSecondary:        'rgba(255,255,255,0.55)',
+  textDisabled:         'rgba(255,255,255,0.30)',
+
+  // Semantic colours
+  success:              '#249b24',   // DONE
+  onSuccess:            '#FFFFFF',
+  successContainer:     '#35ec3538',
+  onSuccessContainer:   '#7FB57F',
+
+  warning:              '#FF9900',
+  onWarning:            '#FFFFFF',
+  warningContainer:     '#BA1A1A',   // Delete red
+  onWarningContainer:   '#FFFFFF',
+
+  shadow:               '#000000',
+};
+
+export const lightTheme = {
+  // Brand (same in both modes)
+  main:                 '#B953D3',
+  accent:               '#56026B',
+  searchBar:            '#CA95D7',
+  done:                 '#7FB57F',
+  primary:              '#B953D3',
+  onPrimary:            '#FFFFFF',
+  primaryContainer:     '#D9A8E8',   // Light lavender — icon container bg
+
+  // Backgrounds
+  background:           '#FAF5FC',   // Soft lavender-white — screen background
+  onBackground:         '#1C0A24',
+  surface:              '#F0E5F6',   // Light purple tint — cards, list rows
+  onSurface:            '#1C0A24',
+
+  // Containers / variants
+  surfaceVariant:       '#E8D8F0',   // Slightly deeper — sections, modal bg
+  onSurfaceVariant:     'rgba(28,10,36,0.70)',
+  surfaceContainer:     '#E1CEEA',   // List headers, segmented areas
+  surfaceContainerHigh: 'rgba(185,83,211,0.10)', // Filter chip bg, subtle fills
+
+  // Borders
+  outline:              'rgba(28,10,36,0.20)',
+  outlineVariant:       'rgba(28,10,36,0.10)',
+
+  // Text
+  textPrimary:          '#1C0A24',
+  textSecondary:        'rgba(28,10,36,0.55)',
+  textDisabled:         'rgba(28,10,36,0.30)',
+
+  // Semantic colours
+  success:              '#249b24',
+  onSuccess:            '#FFFFFF',
+  successContainer:     '#1a791a63',
+  onSuccessContainer:   '#1A5C1A',
+
+  warning:              '#FF9900',
+  onWarning:            '#FFFFFF',
+  warningContainer:     '#BA1A1A',
+  onWarningContainer:   '#FFFFFF',
+
+  shadow:               '#000000',
 };
 
 export function ThemeProvider({ children }) {

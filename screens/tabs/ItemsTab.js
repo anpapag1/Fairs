@@ -15,6 +15,10 @@ import { Swipeable } from 'react-native-gesture-handler';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useGroups } from '../../context/GroupsContext';
 import { useTheme } from '../../context/ThemeContext';
+import { ACCENT } from '../../context/ThemeContext';
+
+// Shorthand so every interactive accent references one constant
+const A = ACCENT;
 
 export default function ItemsTab({ route }) {
   const { group } = route.params;
@@ -183,7 +187,7 @@ export default function ItemsTab({ route }) {
       ]}
       >
       <TouchableOpacity
-        style={[styles.swipeAction, styles.editAction, { backgroundColor: theme.primary }]}
+        style={[styles.swipeAction, styles.editAction, { backgroundColor: ACCENT }]}
         onPress={() => {
           openEditItem(item);
           swipeableRefs.current[item.id]?.close();
@@ -221,17 +225,21 @@ export default function ItemsTab({ route }) {
       rightThreshold={40}
       containerStyle={styles.swipeableContainer}
     >
-      <View style={[styles.itemRow, { backgroundColor: theme.surface }]}>
-        <Text style={[styles.itemNumber, { color: theme.textSecondary }]}>{index + 1}</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-          {item.multiplier && item.multiplier > 1 && (
-            <Text style={[styles.itemMultiplier, { color: theme.primary }]}>{item.multiplier}×</Text>
-          )}
-          <Text style={[styles.itemName, { color: theme.textPrimary }]}>{item.name}</Text>
+      <View style={{ position: 'relative' }}>
+        <View style={[styles.itemRow, { backgroundColor: theme.surface }]}>
+          <Text style={[styles.itemNumber, { color: theme.textSecondary }]}>{index + 1}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+            {item.multiplier && item.multiplier > 1 && (
+              <Text style={[styles.itemMultiplier, { color: A }]}>{item.multiplier}×</Text>
+            )}
+            <Text style={[styles.itemName, { color: theme.textPrimary }]}>{item.name}</Text>
+          </View>
+          <Text style={[styles.itemPrice, { color: theme.textPrimary }]}>
+            {currencySymbol}{(parseFloat(item.price) * (item.multiplier || 1)).toFixed(2)}
+          </Text>
         </View>
-        <Text style={[styles.itemPrice, { color: theme.textPrimary }]}>
-          {currencySymbol}{(parseFloat(item.price) * (item.multiplier || 1)).toFixed(2)}
-        </Text>
+        <View style={[styles.swipeHintLeft, { backgroundColor: theme.outlineVariant }]} />
+        <View style={[styles.swipeHintRight, { backgroundColor: theme.outlineVariant }]} />
       </View>
     </Swipeable>
   );
@@ -243,10 +251,10 @@ export default function ItemsTab({ route }) {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 80}
     >
       <>
-        <View style={[styles.listHeader, { backgroundColor: theme.surfaceContainerHigh }]}>
-          <Text style={[styles.headerNumber, { color: theme.primary }]}>#</Text>
-          <Text style={[styles.headerItem, { color: theme.primary }]}>Item</Text>
-          <Text style={[styles.headerPrice, { color: theme.primary }]}>Price</Text>
+        <View style={[styles.listHeader, { backgroundColor: theme.primaryContainer }]}>
+          <Text style={[styles.headerNumber, { color: A }]}>#</Text>
+          <Text style={[styles.headerItem, { color: A }]}>Item</Text>
+          <Text style={[styles.headerPrice, { color: A }]}>Price</Text>
         </View>
         
         <FlatList
@@ -256,10 +264,10 @@ export default function ItemsTab({ route }) {
           contentContainerStyle={styles.listContainer}
           ListFooterComponent={
             <TouchableOpacity
-              style={[styles.addItemButton, { borderColor: theme.primary, backgroundColor: theme.surface }]}
+              style={[styles.addItemButton, { borderColor: A, backgroundColor: theme.surface }]}
               onPress={() => setModalVisible(true)}
             >
-              <Text style={[styles.addItemButtonText, { color: theme.primary }]}>+ Add Item</Text>
+              <Text style={[styles.addItemButtonText, { color: A }]}>+ Add Item</Text>
             </TouchableOpacity>
           }
         />
@@ -279,7 +287,7 @@ export default function ItemsTab({ route }) {
               style={[styles.tipModeButton, { borderColor: theme.outline, backgroundColor: theme.surface }]}
               onPress={() => setTipMode(tipMode === 'percent' ? 'money' : 'percent')}
             >
-              <Text style={[styles.tipModeText, { color: theme.primary }]}>
+              <Text style={[styles.tipModeText, { color: A }]}>
                 {tipMode === 'percent' ? '%' : currencySymbol}
               </Text>
             </TouchableOpacity>
@@ -288,7 +296,7 @@ export default function ItemsTab({ route }) {
           
           <View style={styles.totalRow}>
             <Text style={[styles.totalLabel, { color: theme.textPrimary }]}>Total:</Text>
-            <Text style={[styles.totalAmount, { color: theme.primary }]}>{currencySymbol}{calculateTotal().toFixed(2)}</Text>
+            <Text style={[styles.totalAmount, { color: A }]}>{currencySymbol}{calculateTotal().toFixed(2)}</Text>
           </View>
         </View>
       </>
@@ -337,10 +345,10 @@ export default function ItemsTab({ route }) {
                   setNewItemPrice('');
                 }}
               >
-                <Text style={[styles.cancelButtonText, { color: theme.primary }]}>Cancel</Text>
+                <Text style={[styles.cancelButtonText, { color: A }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.createButton, { backgroundColor: theme.primary }]}
+                style={[styles.modalButton, styles.createButton, { backgroundColor: A }]}
                 onPress={addItem}
               >
                 <Text style={[styles.createButtonText, { color: theme.onPrimary }]}>Add</Text>
@@ -398,10 +406,10 @@ export default function ItemsTab({ route }) {
                   setEditItemPrice('');
                 }}
               >
-                <Text style={[styles.cancelButtonText, { color: theme.primary }]}>Cancel</Text>
+                <Text style={[styles.cancelButtonText, { color: A }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.createButton, { backgroundColor: theme.primary }]}
+                style={[styles.modalButton, styles.createButton, { backgroundColor: A }]}
                 onPress={saveEditItem}
               >
                 <Text style={[styles.createButtonText, { color: theme.onPrimary }]}>Save</Text>
@@ -443,8 +451,8 @@ export default function ItemsTab({ route }) {
                 <Text style={[styles.counterButtonText, { color: theme.textPrimary }]}>−</Text>
               </TouchableOpacity>
 
-              <View style={[styles.counterDisplay, { backgroundColor: theme.primaryContainer }]}>
-                <Text style={[styles.counterDisplayText, { color: theme.primary }]}>
+              <View style={[styles.counterDisplay, { backgroundColor: A }]}>
+                <Text style={[styles.counterDisplayText, { color: '#FFFFFF' }]}>
                   {multiplierValue || '1'}
                 </Text>
               </View>
@@ -469,10 +477,10 @@ export default function ItemsTab({ route }) {
                   setMultiplierValue('');
                 }}
               >
-                <Text style={[styles.cancelButtonText, { color: theme.primary }]}>Cancel</Text>
+                <Text style={[styles.cancelButtonText, { color: A }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.createButton, { backgroundColor: theme.primary }]}
+                style={[styles.modalButton, styles.createButton, { backgroundColor: A }]}
                 onPress={saveMultiplier}
               >
                 <Text style={[styles.createButtonText, { color: theme.onPrimary }]}>Save</Text>
@@ -487,7 +495,7 @@ export default function ItemsTab({ route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FEF7FF',
+    backgroundColor: 'transparent',
   },
   emptyContainer: {
     flex: 1,
@@ -512,7 +520,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: '#E8DEF8',
+    backgroundColor: 'transparent',
     margin: 8,
     borderRadius: 16,
   },
@@ -521,7 +529,7 @@ const styles = StyleSheet.create({
     width: 30,
     fontSize: 14,
     fontWeight: '700',
-    color: '#6750A4',
+    color: '#56026B',
     letterSpacing: 0.5,
   },
   headerItem: {
@@ -529,7 +537,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontWeight: '700',
-    color: '#6750A4',
+    color: '#56026B',
     letterSpacing: 0.5,
   },
   headerPrice: {
@@ -538,7 +546,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     textAlign: 'right',
-    color: '#6750A4',
+    color: '#56026B',
     letterSpacing: 0.5,
   },
   headerSpacer: {
@@ -553,7 +561,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 18,
     margin: 4,
+    marginLeft: 8,
+    marginRight: 8,
     borderRadius: 16,
+    position: 'relative',
   },
   itemNumber: {
     fontFamily: 'Ysabeau-Regular',
@@ -593,9 +604,9 @@ const styles = StyleSheet.create({
   },
   totalsContainer: {
     padding: 24,
-    backgroundColor: '#FFFBFE',
+    backgroundColor: 'transparent',
     borderTopWidth: 1,
-    borderTopColor: '#E8DEF8',
+    borderTopColor: 'rgba(0,0,0,0.1)',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -632,13 +643,13 @@ const styles = StyleSheet.create({
   },
   tipModeButton: {
     borderWidth: 1,
-    borderColor: '#79747E',
+    borderColor: 'rgba(0,0,0,0.2)',
     borderRadius: 12,
     padding: 10,
     minWidth: 48,
     marginLeft: 8,
     marginRight: 12,
-    backgroundColor: '#E8DEF8',
+    backgroundColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -646,7 +657,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Ysabeau-Bold',
     fontSize: 16,
     fontWeight: '700',
-    color: '#6750A4',
+    color: '#56026B',
   },
   tipAmount: {
     fontFamily: 'Ysabeau-SemiBold',
@@ -671,7 +682,7 @@ const styles = StyleSheet.create({
     fontFamily: 'Ysabeau-Bold',
     fontSize: 28,
     fontWeight: '700',
-    color: '#6750A4',
+    color: '#56026B',
   },
   addItemButton: {
     padding: 18,
@@ -679,40 +690,18 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginBottom: 20,
     borderWidth: 2,
-    borderColor: '#6750A4',
+    borderColor: '#56026B',
     borderRadius: 16,
     borderStyle: 'dashed',
-    backgroundColor: '#FEF7FF',
+    backgroundColor: 'transparent',
     alignItems: 'center',
   },
   addItemButtonText: {
     fontFamily: 'Ysabeau-SemiBold',
     fontSize: 16,
     fontWeight: '600',
-    color: '#6750A4',
+    color: '#56026B',
     letterSpacing: 0.5,
-  },
-  addButton: {
-    position: 'absolute',
-    bottom: 30,
-    alignSelf: 'center',
-    width: 80,
-    height: 80,
-    borderRadius: 28,
-    backgroundColor: '#6750A4',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 6,
-    shadowColor: '#6750A4',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-  },
-  addButtonText: {
-    fontFamily: 'Ysabeau-SemiBold',
-    fontSize: 40,
-    color: '#FFFFFF',
-    fontWeight: '600',
   },
   modalContainer: {
     flex: 1,
@@ -722,7 +711,7 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: '85%',
-    backgroundColor: '#FFFBFE',
+    backgroundColor: 'transparent',
     borderRadius: 28,
     padding: 24,
     shadowColor: '#000',
@@ -772,17 +761,17 @@ const styles = StyleSheet.create({
     marginHorizontal: 6,
   },
   cancelButton: {
-    backgroundColor: '#E8DEF8',
+    backgroundColor: 'transparent',
   },
   cancelButtonText: {
     fontFamily: 'Ysabeau-SemiBold',
     fontSize: 16,
     fontWeight: '600',
-    color: '#6750A4',
+    color: '#56026B',
     letterSpacing: 0.5,
   },
   createButton: {
-    backgroundColor: '#6750A4',
+    backgroundColor: '#56026B',
   },
   createButtonText: {
     fontFamily: 'Ysabeau-SemiBold',
@@ -828,6 +817,24 @@ const styles = StyleSheet.create({
   swipeableContainer: {
     marginBottom: 0,
   },
+  swipeHintLeft: {
+    position: 'absolute',
+    left: 11,
+    top: '50%',
+    transform: [{ translateY: -16 }],
+    width: 5,
+    height: 32,
+    borderRadius: 4,
+  },
+  swipeHintRight: {
+    position: 'absolute',
+    right: 11,
+    top: '50%',
+    transform: [{ translateY: -16 }],
+    width: 5,
+    height: 32,
+    borderRadius: 4,
+  },
   swipeLeftActionsContainer: {
     flexDirection: 'row',
     alignItems: 'stretch',
@@ -850,7 +857,7 @@ const styles = StyleSheet.create({
     padding: 14,
   },
   editAction: {
-    backgroundColor: '#6750A4',
+    backgroundColor: '#56026B',
   },
   deleteAction: {
     backgroundColor: '#BA1A1A',

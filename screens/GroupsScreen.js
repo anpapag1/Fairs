@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,13 +8,17 @@ import {
   TextInput,
   Modal,
   Animated,
+  ScrollView,
+  StatusBar,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Swipeable } from 'react-native-gesture-handler';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Image } from 'react-native';
 import { useCurrency } from '../context/CurrencyContext';
 import { useGroups } from '../context/GroupsContext';
 import { useTheme } from '../context/ThemeContext';
+import { MAIN, ACCENT, SEARCH_BAR } from '../context/ThemeContext';
 
 // Icon mapping for group types
 const ICON_OPTIONS = [
@@ -40,14 +44,35 @@ const GroupIcon = ({ iconId, size = 32, color }) => {
 export default function GroupsScreen({ navigation }) {
   const { currencySymbol } = useCurrency();
   const { groups, addGroup, deleteGroup, updateGroupName } = useGroups();
-  const { theme } = useTheme();
+  const { theme, isDark } = useTheme();
   const [modalVisible, setModalVisible] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
   const [newGroupEmoji, setNewGroupEmoji] = useState('beer');
   const [editingGroup, setEditingGroup] = useState(null);
   const [editGroupName, setEditGroupName] = useState('');
   const [editGroupEmoji, setEditGroupEmoji] = useState('beer');
-  
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeFilter, setActiveFilter] = useState('all');
+
+  // Dynamic filter options derived from existing groups
+  const dynamicFilterOptions = useMemo(() => {
+    const uniqueIcons = [...new Set(groups.map(g => g.emoji || 'beer'))];
+    const filters = [{ id: 'all', icon: 'menu', library: 'Ionicons', label: 'All' }];
+    uniqueIcons.forEach(iconId => {
+      const icon = ICON_OPTIONS.find(i => i.id === iconId);
+      if (icon) filters.push({ id: iconId, icon: icon.name, library: icon.library });
+    });
+    return filters;
+  }, [groups]);
+
+  // Reset active filter if the icon it targets no longer exists in any group
+  useEffect(() => {
+    if (activeFilter !== 'all') {
+      const stillExists = groups.some(g => (g.emoji || 'beer') === activeFilter);
+      if (!stillExists) setActiveFilter('all');
+    }
+  }, [groups]);
+
   // Store refs for all swipeable items
   const swipeableRefs = useRef({});
 
@@ -81,29 +106,26 @@ export default function GroupsScreen({ navigation }) {
     }
   };
 
+  const filteredGroups = groups.filter(group => {
+    const matchesSearch = group.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesFilter = activeFilter === 'all' || group.emoji === activeFilter;
+    return matchesSearch && matchesFilter;
+  });
+
   const renderRightActions = (item, progress, dragX) => {
     const translateX = progress.interpolate({
       inputRange: [0, 1],
       outputRange: [160, 0],
     });
-
     const opacity = progress.interpolate({
       inputRange: [0, 1],
       outputRange: [0, 1],
     });
 
     return (
-      <Animated.View 
-        style={[
-          styles.swipeActionsContainer,
-          { 
-            transform: [{ translateX }],
-            opacity 
-          }
-        ]}
-      >
+      <Animated.View style={[styles.swipeActionsContainer, { transform: [{ translateX }], opacity }]}>
         <TouchableOpacity
-          style={[styles.swipeAction, styles.editAction, { backgroundColor: theme.primary }]}
+          style={[styles.swipeAction, styles.editAction, { backgroundColor: ACCENT }]}
           onPress={() => {
             openEditGroup(item);
             swipeableRefs.current[item.id]?.close();
@@ -113,7 +135,6 @@ export default function GroupsScreen({ navigation }) {
           <Text style={[styles.swipeActionIcon, { color: theme.onPrimary }]}>✎</Text>
           <Text style={[styles.swipeActionText, { color: theme.onPrimary }]}>Edit</Text>
         </TouchableOpacity>
-        
         <TouchableOpacity
           style={[styles.swipeAction, styles.deleteAction, { backgroundColor: theme.warningContainer }]}
           onPress={() => {
@@ -138,75 +159,123 @@ export default function GroupsScreen({ navigation }) {
       rightThreshold={40}
       containerStyle={styles.swipeableContainer}
     >
-      <TouchableOpacity
-        style={[styles.groupItem, { backgroundColor: theme.surfaceContainer || theme.surfaceVariant }]}
-        onPress={() => navigation.navigate('GroupDetail', { group: item })}
-        activeOpacity={0.7}
-      >
-        <View style={styles.groupMainRow}>
-          <View style={[styles.groupIconContainer, { backgroundColor: theme.primaryContainer }]}>
-            <GroupIcon iconId={item.emoji || 'beer'} size={40} color={theme.primary} />
+      <View style={{ position: 'relative' }}>
+        <TouchableOpacity
+          style={[styles.groupItem, { backgroundColor: theme.surface }]}
+          onPress={() => navigation.navigate('GroupDetail', { group: item })}
+          activeOpacity={0.85}
+        >
+          <View style={styles.groupMainRow}>
+            <View style={[styles.groupIconContainer, { backgroundColor: theme.primaryContainer }]}>
+              <GroupIcon iconId={item.emoji || 'beer'} size={36} color={ACCENT} />
+            </View>
+            <View style={styles.groupInfo}>
+              <Text style={[styles.groupName, { color: theme.textPrimary }]}>{item.name}</Text>
+              <Text style={[styles.groupDate, { color: theme.textSecondary }]}>{item.date}</Text>
+            </View>
+            <View style={styles.groupTotalContainer}>
+              <Text style={[styles.groupTotal, { color: theme.textPrimary }]}>{item.total.toFixed(0)}{currencySymbol}</Text>
+            </View>
           </View>
-          <View style={styles.groupInfo}>
-            <Text style={[styles.groupName, { color: theme.textPrimary }]}>{item.name}</Text>
-            <Text style={[styles.groupDate, { color: theme.textSecondary }]}>{item.date}</Text>
-            {item.people && item.people.length > 0 && (
-              <View style={styles.peoplePills}>
-                {item.people.map((person) => (
-                  <View 
-                    key={person.id} 
-                    style={[
-                      styles.personPill, 
-                      { backgroundColor: person.isPaid ? theme.successContainer : theme.surfaceContainerHigh }
-                    ]}
-                  >
-                    <Text 
-                      style={[
-                        styles.personPillText, 
-                        { color: person.isPaid ? theme.onSuccessContainer : theme.textSecondary }
-                      ]}
-                    >
-                      {person.name}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            )}
-          </View>
-          <View style={styles.groupTotalContainer}>
-            <Text style={[styles.groupTotal, { color: theme.primary }]}>{item.total.toFixed(0)}{currencySymbol}</Text>
-          </View>
-        </View>
-      </TouchableOpacity>
+          {item.people && item.people.length > 0 && (
+            <View style={styles.peoplePills}>
+              {item.people.map((person) => (
+                <View
+                  key={person.id}
+                  style={[
+                    styles.personPill,
+                    { backgroundColor: person.isPaid ? theme.successContainer : theme.surfaceContainerHigh },
+                  ]}
+                >
+                  <Text style={[styles.personPillText, { color: theme.textPrimary }]}>{person.name}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </TouchableOpacity>
+        {/* Swipe hint pill peeking from right edge */}
+        <View style={[styles.swipeHint, { backgroundColor: theme.outlineVariant }]} />
+      </View>
     </Swipeable>
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
-      <View style={[styles.header, { backgroundColor: theme.background }]}>
-        <Text style={[styles.title, { color: theme.textPrimary }]}>Groups</Text>
-        <TouchableOpacity 
-          style={[styles.settingsButton, { backgroundColor: theme.surfaceContainer }]}
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['bottom']}>
+      <StatusBar backgroundColor={MAIN} barStyle="light-content" />
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.logoContainer}>
+          <Image source={require('../assets/Logo.png')} style={styles.logoImage} resizeMode="contain" />
+        </View>
+        <View style={[styles.searchBar, { backgroundColor: SEARCH_BAR }]}>
+          <Ionicons name="search" size={18} color="rgba(255,255,255,0.7)" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search"
+            placeholderTextColor="rgba(255,255,255,0.6)"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+        <TouchableOpacity
+          style={styles.settingsButton}
           onPress={() => navigation.navigate('Settings')}
         >
-          <Ionicons name="settings-sharp" size={24} color={theme.primary} />
+          <Ionicons name="settings-sharp" size={22} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
 
+      {/* Filter Bar */}
+      <View style={styles.filterBar}>
+        <Text style={[styles.filterLabel, { color: theme.textSecondary }]}>GROUPS:</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.filterScroll}
+          contentContainerStyle={styles.filterScrollContent}
+        >
+          {dynamicFilterOptions.map((filter) => {
+            const isActive = activeFilter === filter.id;
+            const IconComp = filter.library === 'MaterialCommunityIcons' ? MaterialCommunityIcons : Ionicons;
+            return (
+              <TouchableOpacity
+                key={filter.id}
+                style={[styles.filterChip, { backgroundColor: theme.surfaceContainerHigh }, filter.label && styles.filterChipWide, isActive && styles.filterChipActive]}
+                onPress={() => setActiveFilter(filter.id)}
+                activeOpacity={0.8}
+              >
+                {filter.label ? (
+                  <View style={styles.filterChipAll}>
+                    <IconComp name={filter.icon} size={15} color={isActive ? '#FFFFFF' : theme.textSecondary} />
+                    <Text style={[styles.filterChipText, { color: isActive ? '#FFFFFF' : theme.textSecondary }]}>
+                      {filter.label}
+                    </Text>
+                  </View>
+                ) : (
+                  <IconComp name={filter.icon} size={18} color={isActive ? '#FFFFFF' : theme.textSecondary} />
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+
       <FlatList
-        data={groups}
+        data={filteredGroups}
         renderItem={renderGroup}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContainer}
       />
 
       <TouchableOpacity
-        style={[styles.addButton, { backgroundColor: theme.primary, shadowColor: theme.primary }]}
+        style={styles.addButton}
         onPress={() => setModalVisible(true)}
+        activeOpacity={0.85}
       >
-        <Text style={[styles.addButtonText, { color: theme.onPrimary }]}>+ Add Group</Text>
+        <Text style={styles.addButtonText}>+ Add Group</Text>
       </TouchableOpacity>
 
+      {/* New Group Modal */}
       <Modal
         animationType="slide"
         transparent={true}
@@ -340,156 +409,264 @@ export default function GroupsScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FEF7FF',
   },
+
+  // ── Header ──────────────────────────────────────────────
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 16,
-    backgroundColor: '#FEF7FF',
+    paddingHorizontal: 16,
+    paddingTop: 30,
+    paddingBottom: 14,
+    gap: 10,
+    backgroundColor: MAIN,
+    marginBottom: 4,
   },
-  title: {
-    fontFamily: 'Ysabeau-Bold',
-    fontSize: 32,
-    color: '#1C1B1F',
-    letterSpacing: -0.5,
-  },
-  settingsButton: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+  logoContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#00000010',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    overflow: 'hidden',
   },
-  listContainer: {
-    padding: 16,
-    paddingBottom: 100,
+  logoImage: {
+    width: 36,
+    height: 36,
   },
-  groupItem: {
-    padding: 20,
-    backgroundColor: '#FFFFFF',
+  searchBar: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 24,
+    paddingHorizontal: 14,
+    height: 44,
+  },
+  searchIcon: {
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontFamily: 'Ysabeau-Regular',
+    fontSize: 16,
+    color: '#FFFFFF',
+    paddingVertical: 0,
+  },
+  settingsButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: ACCENT,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // ── Filter Bar ───────────────────────────────────────────
+  filterBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    gap: 8,
+  },
+  filterScroll: {
+    flex: 1,
+  },
+  filterScrollContent: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingRight: 4,
+  },
+  filterLabel: {
+    fontFamily: 'Ysabeau-Bold',
+    fontSize: 13,
+    letterSpacing: 1,
+    marginRight: 2,
+  },
+  filterChip: {
+    width: 40,
+    height: 40,
     borderRadius: 20,
-    borderWidth: 0,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 3,
-    minHeight: 88,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  filterChipActive: {
+    backgroundColor: ACCENT,
+  },
+  filterChipWide: {
+    width: 'auto',
+    paddingHorizontal: 12,
+  },
+  filterChipAll: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  filterChipText: {
+    fontFamily: 'Ysabeau-Bold',
+    fontSize: 12,
+    letterSpacing: 0.3,
+  },
+  filterChipTextActive: {},
+
+  // ── List ────────────────────────────────────────────────
+  listContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 100,
+    gap: 12,
+  },
+  swipeableContainer: {},
+
+  // ── Group Card ──────────────────────────────────────────
+  groupItem: {
+    borderRadius: 20,
+    padding: 18,
+    overflow: 'hidden',
   },
   groupMainRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   groupIconContainer: {
-    width: 64,
-    height: 64,
-    marginRight: 16,
+    width: 56,
+    height: 56,
+    marginRight: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: 16,
-    // backgroundColor applied inline from theme
+    borderRadius: 14,
   },
   groupInfo: {
     flex: 1,
   },
   groupName: {
     fontFamily: 'Ysabeau-Bold',
-    fontSize: 19,
+    fontSize: 22,
     fontWeight: '700',
-    marginBottom: 5,
-    color: '#1C1B1F',
-    letterSpacing: 0.15,
+    letterSpacing: 0.1,
+    marginBottom: 2,
   },
   groupDate: {
     fontFamily: 'Ysabeau-Regular',
     fontSize: 13,
-    color: '#49454F',
-    letterSpacing: 0.25,
-    fontWeight: '500',
-    marginBottom: 11,
+    letterSpacing: 0.2,
   },
   groupTotalContainer: {
-    marginLeft: 8,
     alignItems: 'flex-end',
+    marginLeft: 8,
+  },
+  swipeHint: {
+    position: 'absolute',
+    right: 3,
+    top: '50%',
+    transform: [{ translateY: -20 }],
+    width: 5,
+    height: 40,
+    borderRadius: 4,
+  },
+  swipeHintCurrency: {
+    fontFamily: 'Ysabeau-Bold',
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.85)',
+    lineHeight: 13,
   },
   groupTotal: {
     fontFamily: 'Ysabeau-Bold',
     fontSize: 22,
-    color: '#6750A4',
+    fontWeight: '700',
   },
   peoplePills: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
-    marginTop: 2,
+    marginTop: 12,
   },
   personPill: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    backgroundColor: '#E8DEF8',
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 14,
   },
   personPillText: {
     fontFamily: 'Ysabeau-SemiBold',
-    fontSize: 11,
+    fontSize: 13,
     fontWeight: '600',
-    color: '#49454F',
-    letterSpacing: 0.4,
+    letterSpacing: 0.2,
   },
+
+  // ── Add Button ──────────────────────────────────────────
   addButton: {
     position: 'absolute',
     bottom: 24,
     left: 20,
     right: 20,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#6750A4',
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: ACCENT,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#6750A4',
+    shadowColor: ACCENT,
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOpacity: 0.45,
+    shadowRadius: 14,
+    elevation: 10,
   },
   addButtonText: {
     fontFamily: 'Ysabeau-Bold',
-    fontSize: 16,
+    fontSize: 17,
     color: '#FFFFFF',
     fontWeight: '700',
-    letterSpacing: 1,
-    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
+
+  // ── Swipe Actions ───────────────────────────────────────
+  swipeActionsContainer: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    justifyContent: 'flex-end',
+    paddingLeft: 8,
+  },
+  swipeAction: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 75,
+    height: '100%',
+    borderRadius: 18,
+    marginLeft: 6,
+  },
+  editAction: {
+    backgroundColor: ACCENT,
+  },
+  deleteAction: {
+    backgroundColor: '#BA1A1A',
+  },
+  swipeActionIcon: {
+    fontFamily: 'Ysabeau-Bold',
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 2,
+  },
+  swipeActionText: {
+    fontFamily: 'Ysabeau-Bold',
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+
+  // ── Modal ───────────────────────────────────────────────
   modalContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
   },
   modalContent: {
     width: '88%',
-    backgroundColor: '#FFFBFE',
     borderRadius: 24,
     padding: 24,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 12,
-    },
-    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.3,
     shadowRadius: 20,
     elevation: 12,
   },
@@ -497,7 +674,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Ysabeau-Bold',
     fontSize: 24,
     marginBottom: 20,
-    color: '#1C1B1F',
     letterSpacing: -0.3,
   },
   inputLabel: {
@@ -505,7 +681,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginBottom: 10,
     marginTop: 4,
-    color: '#49454F',
     letterSpacing: 0.4,
     textTransform: 'uppercase',
   },
@@ -542,61 +717,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginHorizontal: 6,
   },
-  cancelButton: {
-    // backgroundColor applied inline from theme
-  },
+  cancelButton: {},
   cancelButtonText: {
     fontFamily: 'Ysabeau-SemiBold',
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: 0.5,
   },
-  createButton: {
-    // backgroundColor applied inline from theme
-  },
+  createButton: {},
   createButtonText: {
     fontFamily: 'Ysabeau-SemiBold',
     fontSize: 16,
     fontWeight: '600',
     letterSpacing: 0.5,
   },
-  swipeableContainer: {
-    marginBottom: 14,
-  },
-  swipeActionsContainer: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    justifyContent: 'flex-end',
-    paddingLeft: 8,
-  },
-  swipeAction: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 75,
-    height: '100%',
-    borderRadius: 16,
-    marginLeft: 4,
-  },
-  editAction: {
-    backgroundColor: '#6750A4',
-  },
-  deleteAction: {
-    backgroundColor: '#BA1A1A',
-  },
-  swipeActionIcon: {
-    fontFamily: 'Ysabeau-Bold',
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    marginBottom: 2,
-  },
-  swipeActionText: {
-    fontFamily: 'Ysabeau-Bold',
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 10,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
-
 });
