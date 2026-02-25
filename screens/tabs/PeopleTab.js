@@ -9,12 +9,14 @@ import {
   Modal,
   ScrollView,
   Animated,
+  Pressable,
+  PanResponder,
+  Dimensions,
 } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useGroups } from '../../context/GroupsContext';
-import { useTheme } from '../../context/ThemeContext';
-import { ACCENT } from '../../context/ThemeContext';
+import { useTheme, MAIN, ACCENT } from '../../context/ThemeContext';
 
 export default function PeopleTab({ route }) {
   const { group } = route.params;
@@ -35,6 +37,45 @@ export default function PeopleTab({ route }) {
   
   // Store refs for all swipeable items
   const swipeableRefs = useRef({});
+
+  // Drag-to-dismiss for item selection modal
+  const SCREEN_HEIGHT = Dimensions.get('window').height;
+  const modalSlideY = useRef(new Animated.Value(0)).current;
+  const isClosingModal = useRef(false);
+
+  const closeModal = () => {
+    if (isClosingModal.current) return;
+    isClosingModal.current = true;
+    Animated.timing(modalSlideY, {
+      toValue: SCREEN_HEIGHT,
+      duration: 260,
+      useNativeDriver: true,
+    }).start(() => {
+      setItemSelectionModalVisible(false);
+      isClosingModal.current = false;
+    });
+  };
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: (_, gs) => gs.dy > 5,
+      onPanResponderMove: (_, gs) => {
+        if (gs.dy > 0) modalSlideY.setValue(gs.dy);
+      },
+      onPanResponderRelease: (_, gs) => {
+        if (gs.dy > 100 || gs.vy > 0.5) {
+          closeModal();
+        } else {
+          Animated.spring(modalSlideY, {
+            toValue: 0,
+            useNativeDriver: true,
+            bounciness: 6,
+          }).start();
+        }
+      },
+    })
+  ).current;
   
   const total = calculateGroupTotal(group.id);
   const items = currentGroup?.items || [];
@@ -122,6 +163,22 @@ export default function PeopleTab({ route }) {
     }
   };
 
+  const allItemIds = [
+    ...items.map(i => i.id),
+    ...(tipValue && parseFloat(tipValue) > 0 ? ['tip'] : [])
+  ];
+  const isAllSelected = allItemIds.length > 0 && allItemIds.every(id => selectedPerson?.selectedItems?.includes(id));
+
+  const selectAllItems = () => {
+    if (!selectedPerson) return;
+    setPeople(prevPeople => prevPeople.map(person => {
+      if (person.id !== selectedPerson.id) return person;
+      const updatedPerson = { ...person, selectedItems: isAllSelected ? [] : allItemIds };
+      setSelectedPerson(updatedPerson);
+      return updatedPerson;
+    }));
+  };
+
   const toggleItemForPerson = (personId, itemId) => {
     setPeople(prevPeople => {
       const updatedPeople = prevPeople.map(person => {
@@ -188,8 +245,16 @@ export default function PeopleTab({ route }) {
   };
 
   const openItemSelection = (person) => {
+    isClosingModal.current = false;
+    modalSlideY.setValue(SCREEN_HEIGHT);
     setSelectedPerson(person);
     setItemSelectionModalVisible(true);
+    Animated.spring(modalSlideY, {
+      toValue: 0,
+      useNativeDriver: true,
+      bounciness: 6,
+      speed: 14,
+    }).start();
   };
 
   const getSelectedItemNames = (person) => {
@@ -287,7 +352,7 @@ export default function PeopleTab({ route }) {
         ]}
       >
         <TouchableOpacity
-          style={[styles.swipeAction, { backgroundColor: ACCENT }]}
+          style={[styles.swipeAction, { backgroundColor: MAIN }]}
           onPress={() => {
             openEditPerson(item);
             swipeableRefs.current[item.id]?.close();
@@ -413,7 +478,7 @@ export default function PeopleTab({ route }) {
         <View style={[
           styles.checkbox, 
           { borderColor: theme.outline },
-          isSelected && { backgroundColor: theme.primary, borderColor: theme.primary }
+          isSelected && { backgroundColor: ACCENT, borderColor: ACCENT }
         ]}>
           {isSelected && <Text style={styles.checkmark}>✓</Text>}
         </View>
@@ -519,7 +584,7 @@ export default function PeopleTab({ route }) {
                       Totals don't match! Difference: {currencySymbol}{Math.abs(total - calculateTotalAssigned()).toFixed(2)}
                     </Text>
                     {!getTipAssignmentStatus().assigned && tipValue && parseFloat(tipValue) > 0 && (
-                      <Text style={[styles.errorHint, { color: theme.onErrorContainer }]}>
+                      <Text style={[styles.errorHint, { color: theme.onWarningContainer }]}>
                         Tip hasn't been assigned to anyone
                       </Text>
                     )}
@@ -553,7 +618,8 @@ export default function PeopleTab({ route }) {
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]}>
+          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setModalVisible(false); setNewPersonName(''); }} />
+          <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
             <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Add Person</Text>
             
             <Text style={[styles.inputLabel, { color: theme.textPrimary }]}>Name</Text>
@@ -574,10 +640,10 @@ export default function PeopleTab({ route }) {
                   setNewPersonName('');
                 }}
               >
-                <Text style={[styles.cancelButtonText, { color: theme.primary }]}>Cancel</Text>
+                <Text style={[styles.cancelButtonText, { color: ACCENT }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.createButton, { backgroundColor: theme.primary }]}
+                style={[styles.modalButton, styles.createButton, { backgroundColor: ACCENT }]}
                 onPress={addPerson}
               >
                 <Text style={[styles.createButtonText, { color: theme.onPrimary }]}>Add</Text>
@@ -598,7 +664,8 @@ export default function PeopleTab({ route }) {
         }}
       >
         <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]}>
+          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setEditingPerson(null); setEditPersonName(''); }} />
+          <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
             <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Edit Person</Text>
             
             <Text style={[styles.inputLabel, { color: theme.textPrimary }]}>Name</Text>
@@ -619,10 +686,10 @@ export default function PeopleTab({ route }) {
                   setEditPersonName('');
                 }}
               >
-                <Text style={[styles.cancelButtonText, { color: theme.primary }]}>Cancel</Text>
+                <Text style={[styles.cancelButtonText, { color: ACCENT }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.createButton, { backgroundColor: theme.primary }]}
+                style={[styles.modalButton, styles.createButton, { backgroundColor: ACCENT }]}
                 onPress={saveEditPerson}
               >
                 <Text style={[styles.createButtonText, { color: theme.onPrimary }]}>Save</Text>
@@ -634,20 +701,37 @@ export default function PeopleTab({ route }) {
 
       {/* Item Selection Modal */}
       <Modal
-        animationType="slide"
+        animationType="none"
         transparent={true}
         visible={itemSelectionModalVisible}
-        onRequestClose={() => setItemSelectionModalVisible(false)}
+        onRequestClose={closeModal}
       >
-        <View style={styles.itemModalContainer}>
-          <View style={[styles.itemModalContent, { backgroundColor: theme.surface }]}>
-            <View style={[styles.itemModalHeader, { borderBottomColor: theme.outlineVariant }]}>
-              <Text style={[styles.itemModalTitle, { color: theme.textPrimary }]}>
-                {selectedPerson?.name}
-              </Text>
-              <Text style={[styles.itemModalSubtitle, { color: theme.textSecondary }]}>
-                Select items this person consumed
-              </Text>
+        <Pressable style={styles.itemModalContainer} onPress={closeModal}>
+          <Animated.View
+            style={[styles.itemModalContent, { backgroundColor: theme.surface, transform: [{ translateY: modalSlideY }] }]}
+            onStartShouldSetResponder={() => true}
+          >
+            <View {...panResponder.panHandlers}>
+              <View style={[styles.itemModalHandle]} />
+              <View style={[styles.itemModalHeader, { borderBottomColor: theme.outlineVariant }]}>
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.itemModalTitle, { color: ACCENT }]}>
+                    {selectedPerson?.name}
+                  </Text>
+                  <Text style={[styles.itemModalSubtitle, { color: theme.textSecondary }]}>
+                    Select items this person consumed
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={[styles.selectAllButton, { borderColor: isAllSelected ? theme.outline : ACCENT }]}
+                  onPress={selectAllItems}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.selectAllText, { color: isAllSelected ? theme.textSecondary : ACCENT }]}>
+                    {isAllSelected ? 'Clear all' : 'Select all'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
             
             <ScrollView style={styles.itemsList}>
@@ -668,15 +752,8 @@ export default function PeopleTab({ route }) {
                 </View>
               )}
             </ScrollView>
-            
-            <TouchableOpacity
-              style={[styles.doneButton, { backgroundColor: theme.primary }]}
-              onPress={() => setItemSelectionModalVisible(false)}
-            >
-              <Text style={[styles.doneButtonText, { color: theme.onPrimary }]}>Done</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+          </Animated.View>
+        </Pressable>
       </Modal>
     </View>
   );
@@ -736,14 +813,6 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 20,
     marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0,
-    shadowRadius: 8,
-    elevation: 2,
   },
   totalLabel: {
     fontSize: 17,
@@ -804,14 +873,6 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     alignItems: 'center',
     backgroundColor: 'transparent',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 2,
   },
   resultLabel: {
     fontSize: 16,
@@ -928,7 +989,7 @@ const styles = StyleSheet.create({
     marginRight: 6,
   },
   editAction: {
-    backgroundColor: '#56026B',
+    backgroundColor: MAIN,
   },
   deleteAction: {
     backgroundColor: '#BA1A1A',
@@ -1040,14 +1101,6 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     backgroundColor: '#B953D3',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0,
-    shadowRadius: 8,
-    elevation: 6,
   },
   addPersonButtonText: {
     fontSize: 16,
@@ -1067,14 +1120,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
     borderRadius: 28,
     padding: 24,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0,
-    shadowRadius: 16,
-    elevation: 8,
   },
   modalTitle: {
     fontSize: 28,
@@ -1129,27 +1174,60 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
   },
   itemModalContent: {
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
     maxHeight: '80%',
     paddingBottom: 24,
+    overflow: 'hidden',
+  },
+  itemModalHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(0,0,0,0.15)',
+    alignSelf: 'center',
+    marginTop: 12,
+    marginBottom: 4,
   },
   itemModalHeader: {
-    padding: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingTop: 12,
+    paddingBottom: 16,
     borderBottomWidth: 1,
+    gap: 12,
+  },
+  itemModalHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   itemModalTitle: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: '700',
-    marginBottom: 6,
-    color: '#1C1B1F',
-    letterSpacing: 0.5,
+    marginBottom: 3,
+    letterSpacing: 0.2,
   },
   itemModalSubtitle: {
-    fontSize: 14,
-    color: '#49454F',
-    fontWeight: '500',
-    letterSpacing: 0.25,
+    fontSize: 13,
+    fontWeight: '400',
+    letterSpacing: 0.1,
+  },
+  selectAllButton: {
+    borderWidth: 1.5,
+    borderRadius: 20,
+    paddingVertical: 7,
+    paddingHorizontal: 14,
+  },
+  selectAllIcon: {
+    fontSize: 22,
+    lineHeight: 24,
+  },
+  selectAllText: {
+    fontSize: 13,
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
   itemsList: {
     maxHeight: 400,
@@ -1212,14 +1290,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#B953D3',
     borderRadius: 24,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0,
-    shadowRadius: 8,
-    elevation: 4,
   },
   doneButtonText: {
     fontSize: 18,

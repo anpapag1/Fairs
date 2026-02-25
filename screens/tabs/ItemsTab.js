@@ -9,6 +9,7 @@ import {
   Modal,
   Animated,
   KeyboardAvoidingView,
+  Pressable,
 } from 'react-native';
 import { Platform } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
@@ -229,7 +230,7 @@ export default function ItemsTab({ route }) {
         <View style={[styles.itemRow, { backgroundColor: theme.surface }]}>
           <Text style={[styles.itemNumber, { color: theme.textSecondary }]}>{index + 1}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
-            {item.multiplier && item.multiplier > 1 && (
+            {item.multiplier > 1 && (
               <Text style={[styles.itemMultiplier, { color: A }]}>{item.multiplier}×</Text>
             )}
             <Text style={[styles.itemName, { color: theme.textPrimary }]}>{item.name}</Text>
@@ -308,13 +309,15 @@ export default function ItemsTab({ route }) {
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
       >
-        <KeyboardAvoidingView
-          style={styles.modalContainer}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 80}
-        >
-          <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]}>
-            <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Add Item</Text>
+        <View style={styles.modalContainer}>
+          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setModalVisible(false); setNewItemName(''); setNewItemPrice(''); }} />
+          <KeyboardAvoidingView
+            style={{ width: '100%', alignItems: 'center' }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 80}
+          >
+            <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
+              <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Add Item</Text>
 
             <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Item Name</Text>
             <TextInput
@@ -354,8 +357,9 @@ export default function ItemsTab({ route }) {
                 <Text style={[styles.createButtonText, { color: theme.onPrimary }]}>Add</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </KeyboardAvoidingView>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
       </Modal>
 
       {/* Edit Item Modal */}
@@ -369,13 +373,15 @@ export default function ItemsTab({ route }) {
           setEditItemPrice('');
         }}
       >
-        <KeyboardAvoidingView
-          style={styles.modalContainer}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 80}
-        >
-          <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]}>
-            <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Edit Item</Text>
+        <View style={styles.modalContainer}>
+          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setEditingItem(null); setEditItemName(''); setEditItemPrice(''); }} />
+          <KeyboardAvoidingView
+            style={{ width: '100%', alignItems: 'center' }}
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 80}
+          >
+            <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
+              <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Edit Item</Text>
 
             <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Item Name</Text>
             <TextInput
@@ -415,13 +421,14 @@ export default function ItemsTab({ route }) {
                 <Text style={[styles.createButtonText, { color: theme.onPrimary }]}>Save</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </KeyboardAvoidingView>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
       </Modal>
 
       {/* Multiplier Modal */}
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent={true}
         visible={multiplierModalVisible}
         onRequestClose={() => {
@@ -430,17 +437,14 @@ export default function ItemsTab({ route }) {
           setMultiplierValue('');
         }}
       >
-        <KeyboardAvoidingView
-          style={styles.modalContainer}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 80}
-        >
-          <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]}>
-            <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Set Quantity</Text>
+        <View style={styles.modalContainer}>
+          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setMultiplierModalVisible(false); setMultiplierItem(null); setMultiplierValue(''); }} />
+            <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
+              <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Set Quantity</Text>
 
             <View style={styles.counterContainer}>
               <TouchableOpacity
-                style={[styles.counterButton, { backgroundColor: theme.surfaceVariant, borderColor: theme.outline }]}
+                style={[styles.counterButton, { backgroundColor: theme.primaryContainer, borderColor: theme.outline }]}
                 onPress={() => {
                   const currentValue = parseInt(multiplierValue) || 1;
                   if (currentValue > 1) {
@@ -451,14 +455,14 @@ export default function ItemsTab({ route }) {
                 <Text style={[styles.counterButtonText, { color: theme.textPrimary }]}>−</Text>
               </TouchableOpacity>
 
-              <View style={[styles.counterDisplay, { backgroundColor: A }]}>
-                <Text style={[styles.counterDisplayText, { color: '#FFFFFF' }]}>
+              <View style={[styles.counterDisplay, { backgroundColor: ACCENT }]}>
+                <Text style={[styles.counterDisplayText, { color: theme.onPrimary }]}>
                   {multiplierValue || '1'}
                 </Text>
               </View>
 
               <TouchableOpacity
-                style={[styles.counterButton, { backgroundColor: theme.surfaceVariant, borderColor: theme.outline }]}
+                style={[styles.counterButton, { backgroundColor: theme.primaryContainer, borderColor: theme.outline }]}
                 onPress={() => {
                   const currentValue = parseInt(multiplierValue) || 1;
                   setMultiplierValue(String(currentValue + 1));
@@ -470,24 +474,24 @@ export default function ItemsTab({ route }) {
             
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.surfaceVariant }]}
+                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.primaryContainer }]}
                 onPress={() => {
                   setMultiplierModalVisible(false);
                   setMultiplierItem(null);
                   setMultiplierValue('');
                 }}
               >
-                <Text style={[styles.cancelButtonText, { color: A }]}>Cancel</Text>
+                <Text style={[styles.cancelButtonText, { color: theme.textPrimary }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.createButton, { backgroundColor: A }]}
+                style={[styles.modalButton, styles.createButton, { backgroundColor: ACCENT }]}
                 onPress={saveMultiplier}
               >
                 <Text style={[styles.createButtonText, { color: theme.onPrimary }]}>Save</Text>
               </TouchableOpacity>
             </View>
-          </View>
-        </KeyboardAvoidingView>
+            </View>
+        </View>
       </Modal>
     </KeyboardAvoidingView>
   );

@@ -10,6 +10,7 @@ import {
   Animated,
   ScrollView,
   StatusBar,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Swipeable } from 'react-native-gesture-handler';
@@ -53,6 +54,15 @@ export default function GroupsScreen({ navigation }) {
   const [editGroupEmoji, setEditGroupEmoji] = useState('beer');
   const [searchQuery, setSearchQuery] = useState('');
   const [activeFilter, setActiveFilter] = useState('all');
+  const [sortOrder, setSortOrder] = useState('date-desc');
+  const [sortMenuVisible, setSortMenuVisible] = useState(false);
+
+  const SORT_OPTIONS = [
+    { id: 'date-desc', label: 'Newest first',  icon: 'arrow-down',  iconLib: 'Ionicons' },
+    { id: 'date-asc',  label: 'Oldest first',  icon: 'arrow-up',    iconLib: 'Ionicons' },
+    { id: 'name-asc',  label: 'Name A → Z',    icon: 'text',        iconLib: 'Ionicons' },
+    { id: 'name-desc', label: 'Name Z → A',    icon: 'text',        iconLib: 'Ionicons' },
+  ];
 
   // Dynamic filter options derived from existing groups
   const dynamicFilterOptions = useMemo(() => {
@@ -106,11 +116,25 @@ export default function GroupsScreen({ navigation }) {
     }
   };
 
-  const filteredGroups = groups.filter(group => {
-    const matchesSearch = group.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = activeFilter === 'all' || group.emoji === activeFilter;
-    return matchesSearch && matchesFilter;
-  });
+  const parseDate = (str) => {
+    if (!str) return 0;
+    const [d, m, y] = str.split('/').map(Number);
+    return new Date(y, m - 1, d).getTime();
+  };
+
+  const filteredGroups = groups
+    .filter(group => {
+      const matchesSearch = group.name.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesFilter = activeFilter === 'all' || group.emoji === activeFilter;
+      return matchesSearch && matchesFilter;
+    })
+    .sort((a, b) => {
+      if (sortOrder === 'date-desc') return parseDate(b.date) - parseDate(a.date);
+      if (sortOrder === 'date-asc')  return parseDate(a.date) - parseDate(b.date);
+      if (sortOrder === 'name-asc')  return a.name.localeCompare(b.name);
+      if (sortOrder === 'name-desc') return b.name.localeCompare(a.name);
+      return 0;
+    });
 
   const renderRightActions = (item, progress, dragX) => {
     const translateX = progress.interpolate({
@@ -246,7 +270,7 @@ export default function GroupsScreen({ navigation }) {
               >
                 {filter.label ? (
                   <View style={styles.filterChipAll}>
-                    <IconComp name={filter.icon} size={15} color={isActive ? '#FFFFFF' : theme.textSecondary} />
+                    <IconComp name={filter.icon} size={18} color={isActive ? '#FFFFFF' : theme.textSecondary} />
                     <Text style={[styles.filterChipText, { color: isActive ? '#FFFFFF' : theme.textSecondary }]}>
                       {filter.label}
                     </Text>
@@ -258,6 +282,13 @@ export default function GroupsScreen({ navigation }) {
             );
           })}
         </ScrollView>
+          <TouchableOpacity
+            style={[styles.sortButton, { backgroundColor: ACCENT }, sortOrder !== 'date-desc' && { backgroundColor: ACCENT }]}
+            onPress={() => setSortMenuVisible(true)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="funnel-outline" size={17} color='#fff'/>
+          </TouchableOpacity>
       </View>
 
       <FlatList
@@ -275,6 +306,31 @@ export default function GroupsScreen({ navigation }) {
         <Text style={styles.addButtonText}>+ Add Group</Text>
       </TouchableOpacity>
 
+      {/* Sort menu */}
+      <Modal transparent animationType="fade" visible={sortMenuVisible} onRequestClose={() => setSortMenuVisible(false)}>
+        <Pressable style={StyleSheet.absoluteFillObject} onPress={() => setSortMenuVisible(false)} />
+        <View style={[styles.sortMenu, { backgroundColor: theme.surface }]} onStartShouldSetResponder={() => true}>
+          <Text style={[styles.sortMenuTitle, { color: theme.textSecondary }]}>Sort by</Text>
+          {SORT_OPTIONS.map(opt => {
+            const active = sortOrder === opt.id;
+            return (
+              <TouchableOpacity
+                key={opt.id}
+                style={[styles.sortMenuRow, active && { backgroundColor: theme.primaryContainer }]}
+                onPress={() => { setSortOrder(opt.id); setSortMenuVisible(false); }}
+                activeOpacity={0.8}
+              >
+                <Ionicons name={opt.icon} size={18} color={active ? ACCENT : theme.textSecondary} />
+                <Text style={[styles.sortMenuLabel, { color: active ? ACCENT : theme.textPrimary }, active && { fontFamily: 'Ysabeau-Bold' }]}>
+                  {opt.label}
+                </Text>
+                {active && <Ionicons name="checkmark" size={18} color={ACCENT} style={{ marginLeft: 'auto' }} />}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </Modal>
+
       {/* New Group Modal */}
       <Modal
         animationType="slide"
@@ -283,7 +339,8 @@ export default function GroupsScreen({ navigation }) {
         onRequestClose={() => setModalVisible(false)}
       >
         <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]}>
+          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setModalVisible(false); setNewGroupName(''); setNewGroupEmoji('beer'); }} />
+          <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
             <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>New Group</Text>
             
             <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Icon</Text>
@@ -324,10 +381,10 @@ export default function GroupsScreen({ navigation }) {
                   setNewGroupEmoji('beer');
                 }}
               >
-                <Text style={[styles.cancelButtonText, { color: theme.primary }]}>Cancel</Text>
+                <Text style={[styles.cancelButtonText, { color: ACCENT }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.createButton, { backgroundColor: theme.primary }]}
+                style={[styles.modalButton, styles.createButton, { backgroundColor: ACCENT }]}
                 onPress={addNewGroup}
               >
                 <Text style={[styles.createButtonText, { color: theme.onPrimary }]}>Create</Text>
@@ -349,7 +406,8 @@ export default function GroupsScreen({ navigation }) {
         }}
       >
         <View style={styles.modalContainer}>
-          <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]}>
+          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setEditingGroup(null); setEditGroupName(''); setEditGroupEmoji('beer'); }} />
+          <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
             <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Edit Group</Text>
             
             <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Icon</Text>
@@ -500,7 +558,7 @@ const styles = StyleSheet.create({
   filterChipAll: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: 7,
   },
   filterChipText: {
     fontFamily: 'Ysabeau-Bold',
@@ -509,10 +567,52 @@ const styles = StyleSheet.create({
   },
   filterChipTextActive: {},
 
+  sortButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 13,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 4,
+  },
+  sortMenu: {
+    position: 'absolute',
+    right: 16,
+    top: 130,
+    width: 210,
+    borderRadius: 15,
+    paddingVertical: 10,
+    paddingHorizontal: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.18,
+    shadowRadius: 16,
+    elevation: 10,
+  },
+  sortMenuTitle: {
+    fontFamily: 'Ysabeau-Bold',
+    fontSize: 12,
+    letterSpacing: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  sortMenuRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 11,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+  },
+  sortMenuLabel: {
+    fontFamily: 'Ysabeau-Regular',
+    fontSize: 15,
+  },
+
   // ── List ────────────────────────────────────────────────
   listContainer: {
     paddingHorizontal: 16,
-    paddingBottom: 100,
+    paddingBottom: 140,
     gap: 12,
   },
   swipeableContainer: {},

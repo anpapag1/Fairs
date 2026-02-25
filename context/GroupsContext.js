@@ -114,6 +114,15 @@ export const GroupsProvider = ({ children }) => {
     return groups.find(group => group.id === groupId);
   };
 
+  // Merge selected imported groups — reassigns IDs to avoid collisions
+  const importGroups = (groupsToImport) => {
+    const remapped = groupsToImport.map(g => ({
+      ...g,
+      id: Date.now().toString() + Math.random().toString(36).slice(2),
+    }));
+    setGroups(prev => [...prev, ...remapped]);
+  };
+
   const calculateGroupTotal = (groupId) => {
     const group = getGroup(groupId);
     if (!group) return 0;
@@ -154,6 +163,7 @@ export const GroupsProvider = ({ children }) => {
     deleteGroup,
     getGroup,
     calculateGroupTotal,
+    importGroups,
   };
 
   return (
