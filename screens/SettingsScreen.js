@@ -327,10 +327,6 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     borderRadius: 20,
     padding: 22,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.10,
-    shadowRadius: 12,
-    elevation: 3,
   },
   sectionTitle: {
     fontFamily: 'Ysabeau-Bold',

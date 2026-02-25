@@ -11,7 +11,6 @@ const THEME_STORAGE_KEY = '@fairs_theme';
 // ─────────────────────────────────────────────────────────────
 export const MAIN       = '#B953D3';
 export const ACCENT     = '#56026B';
-export const SEARCH_BAR = '#CA95D7';
 export const DONE       = '#7FB57F';
 
 // ─────────────────────────────────────────────────────────────
@@ -23,7 +22,6 @@ export const darkTheme = {
   // Brand (same in both modes)
   main:                 '#B953D3',
   accent:               '#56026B',
-  searchBar:            '#CA95D7',
   done:                 '#7FB57F',
   primary:              '#B953D3',   // MAIN — used for accent text, active states
   onPrimary:            '#FFFFFF',
@@ -36,7 +34,7 @@ export const darkTheme = {
   onSurface:            '#FFFFFF',
 
   // Containers / variants
-  surfaceVariant:       '#3D2048',   // Slightly lighter than BG — sections, modal bg
+  surfaceVariant:       '#653f6e',   // Slightly lighter than BG — sections, modal bg
   onSurfaceVariant:     'rgba(255,255,255,0.70)',
   surfaceContainer:     '#3A1D45',   // List headers, segmented areas
   surfaceContainerHigh: 'rgba(255,255,255,0.10)', // Filter chip bg, subtle fills

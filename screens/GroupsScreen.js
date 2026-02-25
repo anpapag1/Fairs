@@ -231,12 +231,11 @@ export default function GroupsScreen({ navigation }) {
         <View style={styles.logoContainer}>
           <Image source={require('../assets/Logo.png')} style={styles.logoImage} resizeMode="contain" />
         </View>
-        <View style={[styles.searchBar, { backgroundColor: SEARCH_BAR }]}>
-          <Ionicons name="search" size={18} color="rgba(255,255,255,0.7)" style={styles.searchIcon} />
+        <View style={[styles.searchBar, { backgroundColor: theme.primaryContainer }]}>
+          <Ionicons name="search" size={18} style={[styles.searchIcon, { color: theme.textSecondary }]} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: theme.textSecondary }]}
             placeholder="Search"
-            placeholderTextColor="rgba(255,255,255,0.6)"
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -365,7 +364,7 @@ export default function GroupsScreen({ navigation }) {
 
             <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Group Name</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
+              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surfaceContainerHigh, color: theme.textPrimary }]}
               placeholder="Group name"
               placeholderTextColor={theme.textSecondary}
               value={newGroupName}
@@ -374,7 +373,7 @@ export default function GroupsScreen({ navigation }) {
             />
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.surfaceVariant }]}
+                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.primaryContainer }]}
                 onPress={() => {
                   setModalVisible(false);
                   setNewGroupName('');
@@ -800,8 +799,8 @@ const styles = StyleSheet.create({
   },
   input: {
     fontFamily: 'Ysabeau-Regular',
-    borderWidth: 1,
-    borderRadius: 12,
+    borderWidth: 2,
+    borderRadius: 14,
     padding: 16,
     fontSize: 16,
     marginBottom: 24,
@@ -809,13 +808,14 @@ const styles = StyleSheet.create({
   modalButtons: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: 16,
   },
   modalButton: {
     flex: 1,
     padding: 16,
     borderRadius: 20,
     alignItems: 'center',
-    marginHorizontal: 6,
+    marginHorizontal: 0,
   },
   cancelButton: {},
   cancelButtonText: {
