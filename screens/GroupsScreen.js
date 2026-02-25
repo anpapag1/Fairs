@@ -11,6 +11,7 @@ import {
   ScrollView,
   StatusBar,
   Pressable,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Swipeable } from 'react-native-gesture-handler';
@@ -337,7 +338,7 @@ export default function GroupsScreen({ navigation }) {
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalContainer}>
+        <KeyboardAvoidingView style={styles.modalContainer} behavior="padding" keyboardVerticalOffset={0}>
           <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setModalVisible(false); setNewGroupName(''); setNewGroupEmoji('beer'); }} />
           <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
             <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>New Group</Text>
@@ -364,7 +365,7 @@ export default function GroupsScreen({ navigation }) {
 
             <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Group Name</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surfaceContainerHigh, color: theme.textPrimary }]}
+              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
               placeholder="Group name"
               placeholderTextColor={theme.textSecondary}
               value={newGroupName}
@@ -373,7 +374,7 @@ export default function GroupsScreen({ navigation }) {
             />
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.primaryContainer }]}
+                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.surfaceVariant }]}
                 onPress={() => {
                   setModalVisible(false);
                   setNewGroupName('');
@@ -390,7 +391,7 @@ export default function GroupsScreen({ navigation }) {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Edit Group Modal */}
@@ -404,7 +405,7 @@ export default function GroupsScreen({ navigation }) {
           setEditGroupEmoji('beer');
         }}
       >
-        <View style={styles.modalContainer}>
+        <KeyboardAvoidingView style={styles.modalContainer} behavior="padding" keyboardVerticalOffset={0}>
           <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setEditingGroup(null); setEditGroupName(''); setEditGroupEmoji('beer'); }} />
           <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
             <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Edit Group</Text>
@@ -431,7 +432,7 @@ export default function GroupsScreen({ navigation }) {
 
             <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Group Name</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surface, color: theme.textPrimary }]}
+              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
               placeholder="Group name"
               placeholderTextColor={theme.textSecondary}
               value={editGroupName}
@@ -447,17 +448,17 @@ export default function GroupsScreen({ navigation }) {
                   setEditGroupEmoji('beer');
                 }}
               >
-                <Text style={[styles.cancelButtonText, { color: theme.primary }]}>Cancel</Text>
+                <Text style={[styles.cancelButtonText, { color: ACCENT }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.modalButton, styles.createButton, { backgroundColor: theme.primary }]}
+                style={[styles.modalButton, styles.createButton, { backgroundColor: ACCENT }]}
                 onPress={saveEditGroup}
               >
                 <Text style={[styles.createButtonText, { color: theme.onPrimary }]}>Save</Text>
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );
@@ -758,26 +759,28 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
     width: '88%',
     borderRadius: 24,
     padding: 24,
     shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.2,
     shadowRadius: 20,
     elevation: 12,
   },
   modalTitle: {
     fontFamily: 'Ysabeau-Bold',
     fontSize: 24,
+    fontWeight: '700',
     marginBottom: 20,
     letterSpacing: -0.3,
   },
   inputLabel: {
     fontFamily: 'Ysabeau-Bold',
     fontSize: 13,
+    fontWeight: '700',
     marginBottom: 10,
     marginTop: 4,
     letterSpacing: 0.4,
@@ -807,7 +810,6 @@ const styles = StyleSheet.create({
   },
   modalButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     gap: 16,
   },
   modalButton: {

@@ -519,19 +519,14 @@ export default function ItemsTab({ route }) {
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalContainer}>
+        <KeyboardAvoidingView style={styles.modalContainer} behavior="padding" keyboardVerticalOffset={0}>
           <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setModalVisible(false); setNewItemName(''); setNewItemPrice(''); }} />
-          <KeyboardAvoidingView
-            style={{ width: '100%', alignItems: 'center' }}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 80}
-          >
-            <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
-              <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Add Item</Text>
+          <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
+            <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Add Item</Text>
 
             <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Item Name</Text>
             <TextInput
-              style={[styles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
+              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
               placeholder="e.g., Pizza"
               placeholderTextColor={theme.textSecondary}
               value={newItemName}
@@ -541,7 +536,7 @@ export default function ItemsTab({ route }) {
             
             <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Price</Text>
             <TextInput
-              style={[styles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
+              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
               placeholder="0.00"
               placeholderTextColor={theme.textSecondary}
               keyboardType="decimal-pad"
@@ -567,9 +562,8 @@ export default function ItemsTab({ route }) {
                 <Text style={[styles.createButtonText, { color: theme.onPrimary }]}>Add</Text>
               </TouchableOpacity>
             </View>
-            </View>
-          </KeyboardAvoidingView>
-        </View>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Edit Item Modal */}
@@ -583,15 +577,10 @@ export default function ItemsTab({ route }) {
           setEditItemPrice('');
         }}
       >
-        <View style={styles.modalContainer}>
+        <KeyboardAvoidingView style={styles.modalContainer} behavior="padding" keyboardVerticalOffset={0}>
           <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setEditingItem(null); setEditItemName(''); setEditItemPrice(''); }} />
-          <KeyboardAvoidingView
-            style={{ width: '100%', alignItems: 'center' }}
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 80}
-          >
-            <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
-              <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Edit Item</Text>
+          <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
+            <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Edit Item</Text>
 
             <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Item Name</Text>
             <TextInput
@@ -631,9 +620,8 @@ export default function ItemsTab({ route }) {
                 <Text style={[styles.createButtonText, { color: theme.onPrimary }]}>Save</Text>
               </TouchableOpacity>
             </View>
-            </View>
-          </KeyboardAvoidingView>
-        </View>
+          </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Multiplier Modal */}
@@ -684,14 +672,14 @@ export default function ItemsTab({ route }) {
             
             <View style={styles.modalButtons}>
               <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.primaryContainer }]}
+                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.surfaceVariant }]}
                 onPress={() => {
                   setMultiplierModalVisible(false);
                   setMultiplierItem(null);
                   setMultiplierValue('');
                 }}
               >
-                <Text style={[styles.cancelButtonText, { color: theme.textPrimary }]}>Cancel</Text>
+                <Text style={[styles.cancelButtonText, { color: ACCENT }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.modalButton, styles.createButton, { backgroundColor: ACCENT }]}
@@ -759,6 +747,11 @@ export default function ItemsTab({ route }) {
         visible={reviewModalVisible}
         onRequestClose={() => { setReviewModalVisible(false); setScannedItems([]); }}
       >
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior="padding"
+          keyboardVerticalOffset={0}
+        >
         <View style={[styles.reviewContainer, { backgroundColor: theme.background }]}>
           {/* Header */}
           <View style={[styles.reviewHeader, { borderBottomColor: theme.outlineVariant }]}>
@@ -818,6 +811,7 @@ export default function ItemsTab({ route }) {
             </TouchableOpacity>
           </View>
         </View>
+        </KeyboardAvoidingView>
       </Modal>
     </KeyboardAvoidingView>
   );
@@ -1051,77 +1045,64 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    width: '85%',
-    backgroundColor: 'transparent',
-    borderRadius: 28,
+    width: '88%',
+    borderRadius: 24,
     padding: 24,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 8,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 12,
   },
   modalTitle: {
     fontFamily: 'Ysabeau-Bold',
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '700',
-    marginBottom: 24,
-    color: '#1C1B1F',
-    letterSpacing: 0.5,
+    marginBottom: 20,
+    letterSpacing: -0.3,
   },
   inputLabel: {
-    fontFamily: 'Ysabeau-SemiBold',
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 8,
-    color: '#49454F',
-    letterSpacing: 0.25,
+    fontFamily: 'Ysabeau-Bold',
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 10,
+    marginTop: 4,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
   },
   input: {
     fontFamily: 'Ysabeau-Regular',
-    borderRadius: 12,
+    borderWidth: 2,
+    borderRadius: 14,
     padding: 16,
     fontSize: 16,
-    marginBottom: 20,
-    backgroundColor: '#FFFFFF',
-    color: '#1C1B1F',
+    marginBottom: 24,
   },
   modalButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
+    gap: 16,
+    marginTop: 4,
   },
   modalButton: {
     flex: 1,
     padding: 16,
     borderRadius: 20,
     alignItems: 'center',
-    marginHorizontal: 6,
   },
-  cancelButton: {
-    backgroundColor: 'transparent',
-  },
+  cancelButton: {},
   cancelButtonText: {
     fontFamily: 'Ysabeau-SemiBold',
     fontSize: 16,
     fontWeight: '600',
-    color: '#56026B',
     letterSpacing: 0.5,
   },
-  createButton: {
-    backgroundColor: '#56026B',
-  },
+  createButton: {},
   createButtonText: {
     fontFamily: 'Ysabeau-SemiBold',
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
     letterSpacing: 0.5,
   },
   counterContainer: {

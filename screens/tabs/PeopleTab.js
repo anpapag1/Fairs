@@ -12,6 +12,7 @@ import {
   Pressable,
   PanResponder,
   Dimensions,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { useCurrency } from '../../context/CurrencyContext';
@@ -617,14 +618,14 @@ export default function PeopleTab({ route }) {
         visible={modalVisible}
         onRequestClose={() => setModalVisible(false)}
       >
-        <View style={styles.modalContainer}>
+        <KeyboardAvoidingView style={styles.modalContainer} behavior="padding" keyboardVerticalOffset={0}>
           <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setModalVisible(false); setNewPersonName(''); }} />
           <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
             <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Add Person</Text>
             
-            <Text style={[styles.inputLabel, { color: theme.textPrimary }]}>Name</Text>
+            <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Name</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.outline, color: theme.textPrimary, backgroundColor: theme.surface }]}
+              style={[styles.input, { borderColor: theme.outline, color: theme.textPrimary, backgroundColor: theme.surfaceVariant }]}
               placeholder="e.g., John"
               placeholderTextColor={theme.textSecondary}
               value={newPersonName}
@@ -650,7 +651,7 @@ export default function PeopleTab({ route }) {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Edit Person Modal */}
@@ -663,14 +664,14 @@ export default function PeopleTab({ route }) {
           setEditPersonName('');
         }}
       >
-        <View style={styles.modalContainer}>
+        <KeyboardAvoidingView style={styles.modalContainer} behavior="padding" keyboardVerticalOffset={0}>
           <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setEditingPerson(null); setEditPersonName(''); }} />
           <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
             <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Edit Person</Text>
             
-            <Text style={[styles.inputLabel, { color: theme.textPrimary }]}>Name</Text>
+            <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Name</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.outline, color: theme.textPrimary, backgroundColor: theme.surface }]}
+              style={[styles.input, { borderColor: theme.outline, color: theme.textPrimary, backgroundColor: theme.surfaceVariant }]}
               placeholder="e.g., John"
               placeholderTextColor={theme.textSecondary}
               value={editPersonName}
@@ -696,7 +697,7 @@ export default function PeopleTab({ route }) {
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Item Selection Modal */}
@@ -829,11 +830,13 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   inputLabel: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
-    color: '#1C1B1F',
-    letterSpacing: 0.15,
+    fontFamily: 'Ysabeau-Bold',
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 10,
+    marginTop: 4,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
   },
   inputRow: {
     flexDirection: 'row',
@@ -1112,60 +1115,55 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   modalContent: {
-    width: '85%',
-    maxHeight: '80%',
-    backgroundColor: 'transparent',
-    borderRadius: 28,
+    width: '88%',
+    borderRadius: 24,
     padding: 24,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.2,
+    shadowRadius: 20,
+    elevation: 12,
   },
   modalTitle: {
-    fontSize: 28,
+    fontFamily: 'Ysabeau-Bold',
+    fontSize: 24,
     fontWeight: '700',
-    marginBottom: 24,
-    color: '#1C1B1F',
-    letterSpacing: 0.5,
+    marginBottom: 20,
+    letterSpacing: -0.3,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#79747E',
-    borderRadius: 12,
+    fontFamily: 'Ysabeau-Regular',
+    borderWidth: 2,
+    borderRadius: 14,
     padding: 16,
     fontSize: 16,
-    marginBottom: 20,
-    backgroundColor: '#FFFFFF',
-    color: '#1C1B1F',
+    marginBottom: 24,
   },
   modalButtons: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
+    gap: 16,
+    marginTop: 4,
   },
   modalButton: {
     flex: 1,
     padding: 16,
     borderRadius: 20,
     alignItems: 'center',
-    marginHorizontal: 6,
   },
-  cancelButton: {
-    backgroundColor: 'transparent',
-  },
+  cancelButton: {},
   cancelButtonText: {
+    fontFamily: 'Ysabeau-SemiBold',
     fontSize: 16,
     fontWeight: '600',
-    color: '#B953D3',
     letterSpacing: 0.5,
   },
-  createButton: {
-    backgroundColor: '#B953D3',
-  },
+  createButton: {},
   createButtonText: {
+    fontFamily: 'Ysabeau-SemiBold',
     fontSize: 16,
     fontWeight: '600',
-    color: '#FFFFFF',
     letterSpacing: 0.5,
   },
   itemModalContainer: {
