@@ -10,8 +10,12 @@ import {
   Animated,
   KeyboardAvoidingView,
   Pressable,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { Swipeable } from 'react-native-gesture-handler';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useGroups } from '../../context/GroupsContext';
@@ -20,6 +24,132 @@ import { ACCENT } from '../../context/ThemeContext';
 
 // Shorthand so every interactive accent references one constant
 const A = ACCENT;
+
+// --- Pure bill text parser (no internet, no state) ---
+const SKIP_REGEX = /subtotal|sub.?total|grand.?total|total|tax|vat|gst|discount|service charge|gratuity|tip|balance due|change|cash|credit|debit|thank you|order|table|receipt|invoice|phone|tel\.|address|website|www\.|http|visa|mastercard|amex|card no/i;
+const PRICE_REGEX = /(?:[$€£¥]?\s*)(\d{1,4}[.,]\d{2})\s*$/;
+const PRICE_ONLY_REGEX = /^[$€£¥]?\s*\d{1,4}[.,]\d{2}\s*$/;
+const LEADING_PRICE_REGEX = /^[$€£¥]?\s*(\d{1,4}[.,]\d{2})\b/;
+
+function parseBillText(text) {
+  const lines = text.split('\n').map(l => l.trim()).filter(l => l.length >= 2);
+
+  // --- Strategy 1: inline (price at end of same line) ---
+  const inlineResults = [];
+  lines.forEach((line, index) => {
+    if (SKIP_REGEX.test(line)) return;
+    if (PRICE_ONLY_REGEX.test(line)) return;
+    const priceMatch = line.match(PRICE_REGEX);
+    if (!priceMatch) return;
+    const price = parseFloat(priceMatch[1].replace(',', '.'));
+    if (isNaN(price) || price <= 0 || price > 999) return;
+    let name = line.slice(0, priceMatch.index)
+      .replace(/^[\d]+\s*[x×.)\-]\s*/i, '')
+      .replace(/[*•·]+/g, '')
+      .trim();
+    if (!name || name.length < 2) return;
+    inlineResults.push({
+      id: `scan_${Date.now()}_${index}`,
+      name,
+      price: price.toFixed(2),
+      selected: true,
+    });
+  });
+  if (inlineResults.length > 0) return inlineResults;
+
+  // --- Strategy 2: split-column (names and prices on separate lines) ---
+  // Also handles "price + tax-rate" lines like "0,70 13,00%"
+  const nameLines = [];
+  const priceLines = [];
+  lines.forEach(line => {
+    if (SKIP_REGEX.test(line)) return;
+    if (/^\d{1,2}[:.\-]\d{2}([:.\-]\d{2,4})?$/.test(line)) return; // times
+    if (/^date:/i.test(line)) return;
+
+    const leadingPrice = line.match(LEADING_PRICE_REGEX);
+    if (leadingPrice) {
+      const price = parseFloat(leadingPrice[1].replace(',', '.'));
+      if (!isNaN(price) && price > 0 && price <= 999) {
+        priceLines.push(price);
+        return;
+      }
+    }
+    // Not a price line — treat as name if it has letters
+    if (/[a-zA-Z\u0370-\u03ff\u1f00-\u1fff]/i.test(line)) {
+      nameLines.push(line);
+    }
+  });
+
+  // drop largest prices until counts match (likely totals)
+  while (priceLines.length > nameLines.length && priceLines.length > 0) {
+    priceLines.splice(priceLines.indexOf(Math.max(...priceLines)), 1);
+  }
+  const count = Math.min(nameLines.length, priceLines.length);
+  const results = [];
+  for (let i = 0; i < count; i++) {
+    results.push({
+      id: `scan_${Date.now()}_${i}`,
+      name: nameLines[i],
+      price: priceLines[i].toFixed(2),
+      selected: true,
+    });
+  }
+  return results;
+}
+
+// Defined outside component for perf — no closures over component state
+function ReviewItemRow({ item, accent, theme, onToggle, onNameChange, onPriceChange, onDelete }) {
+  return (
+    <View style={[styles.reviewRow, { backgroundColor: theme.surface }]}>
+      <TouchableOpacity
+        style={[
+          styles.reviewCheckbox,
+          {
+            borderColor: accent,
+            backgroundColor: item.selected ? accent : 'transparent',
+          },
+        ]}
+        onPress={() => onToggle(item.id)}
+        activeOpacity={0.7}
+      >
+        {item.selected && (
+          <Ionicons name="checkmark" size={13} color={theme.onPrimary} />
+        )}
+      </TouchableOpacity>
+
+      <TextInput
+        style={[
+          styles.reviewNameInput,
+          { borderColor: theme.outline, color: theme.textPrimary },
+        ]}
+        value={item.name}
+        onChangeText={(v) => onNameChange(item.id, v)}
+        placeholderTextColor={theme.textSecondary}
+        placeholder="Item name"
+      />
+
+      <TextInput
+        style={[
+          styles.reviewPriceInput,
+          { borderColor: theme.outline, color: theme.textPrimary },
+        ]}
+        value={item.price}
+        onChangeText={(v) => onPriceChange(item.id, v)}
+        keyboardType="decimal-pad"
+        placeholderTextColor={theme.textSecondary}
+        placeholder="0.00"
+      />
+
+      <TouchableOpacity
+        style={styles.reviewDeleteBtn}
+        onPress={() => onDelete(item.id)}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="trash-outline" size={18} color="#BA1A1A" />
+      </TouchableOpacity>
+    </View>
+  );
+}
 
 export default function ItemsTab({ route }) {
   const { group } = route.params;
@@ -40,6 +170,10 @@ export default function ItemsTab({ route }) {
   const [multiplierValue, setMultiplierValue] = useState('');
   const [tipValue, setTipValue] = useState(currentGroup?.tipValue || '');
   const [tipMode, setTipMode] = useState(currentGroup?.tipMode || 'money');
+  const [scanSheetVisible, setScanSheetVisible] = useState(false);
+  const [scannedItems, setScannedItems] = useState([]);
+  const [reviewModalVisible, setReviewModalVisible] = useState(false);
+  const [scanLoading, setScanLoading] = useState(false);
   
   // Store refs for all swipeable items
   const swipeableRefs = useRef({});
@@ -72,6 +206,56 @@ export default function ItemsTab({ route }) {
 
   const calculateTotal = () => {
     return calculateSubtotal() + calculateTip();
+  };
+
+  const handlePickImage = async (source) => {
+    try {
+      if (source === 'camera') {
+        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission needed', 'Camera permission is required to take a photo.');
+          return;
+        }
+      } else {
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission needed', 'Photo library permission is required to choose an image.');
+          return;
+        }
+      }
+
+      const result = source === 'camera'
+        ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.9, allowsEditing: true })
+        : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9, allowsEditing: true });
+
+      if (result.canceled) return;
+
+      setScanLoading(true);
+      try {
+        const TextRecognition = require('@react-native-ml-kit/text-recognition').default;
+        const recognized = await TextRecognition.recognize(result.assets[0].uri);
+        const lines = (recognized.blocks || [])
+          .flatMap(block => block.lines || [])
+          .map(line => line.text || '')
+          .filter(Boolean);
+        console.log('[BillScan] Raw lines:', JSON.stringify(lines, null, 2));
+        const parsed = parseBillText(lines.join('\n'));
+        console.log('[BillScan] Parsed items:', JSON.stringify(parsed, null, 2));
+        setScanLoading(false);
+        if (parsed.length === 0) {
+          Alert.alert('No items found', 'Could not detect any items in this bill. Try a clearer photo.');
+        } else {
+          setScannedItems(parsed);
+          setTimeout(() => setReviewModalVisible(true), 350);
+        }
+      } catch (inner) {
+        throw inner;
+      }
+    } catch (e) {
+      setScanLoading(false);
+      console.error('[BillScan] Error:', e);
+      Alert.alert('Error', e?.message || String(e));
+    }
   };
 
   const addItem = () => {
@@ -128,6 +312,24 @@ export default function ItemsTab({ route }) {
       setMultiplierValue('');
       setMultiplierModalVisible(false);
     }
+  };
+
+  const addScannedItems = () => {
+    const valid = scannedItems.filter(
+      i => i.selected && i.name.trim() !== '' && !isNaN(parseFloat(i.price))
+    );
+    if (valid.length === 0) {
+      Alert.alert('No items selected', 'Select at least one item to add.');
+      return;
+    }
+    const newItems = valid.map((i, index) => ({
+      id: `${Date.now()}_${index}`,
+      name: i.name.trim(),
+      price: parseFloat(i.price).toFixed(2),
+    }));
+    setItems(prev => [...prev, ...newItems]);
+    setReviewModalVisible(false);
+    setScannedItems([]);
   };
 
   const renderLeftActions = (item, progress, dragX) => {
@@ -264,12 +466,20 @@ export default function ItemsTab({ route }) {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContainer}
           ListFooterComponent={
-            <TouchableOpacity
-              style={[styles.addItemButton, { borderColor: A, backgroundColor: theme.surface }]}
-              onPress={() => setModalVisible(true)}
-            >
-              <Text style={[styles.addItemButtonText, { color: A }]}>+ Add Item</Text>
-            </TouchableOpacity>
+            <View style={styles.footerRow}>
+              <TouchableOpacity
+                style={[styles.addItemButton, { borderColor: A, backgroundColor: theme.surface }]}
+                onPress={() => setModalVisible(true)}
+              >
+                <Text style={[styles.addItemButtonText, { color: A }]}>+ Add Item</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.scanButton, { borderColor: A, backgroundColor: theme.surface }]}
+                onPress={() => setScanSheetVisible(true)}
+              >
+                <Ionicons name="receipt-outline" size={22} color={A} />
+              </TouchableOpacity>
+            </View>
           }
         />
 
@@ -493,6 +703,122 @@ export default function ItemsTab({ route }) {
             </View>
         </View>
       </Modal>
+
+      {/* Scan Loading Overlay */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={scanLoading}
+        onRequestClose={() => {}}
+      >
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color={A} />
+          <Text style={[styles.loadingText, { color: '#fff' }]}>Reading bill…</Text>
+        </View>
+      </Modal>
+
+      {/* Scan Bill Action Sheet */}
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={scanSheetVisible}
+        onRequestClose={() => setScanSheetVisible(false)}
+      >
+        <Pressable
+          style={styles.sheetOverlay}
+          onPress={() => setScanSheetVisible(false)}
+        />
+        <View style={[styles.sheetContainer, { backgroundColor: theme.surface }]}>
+          <View style={[styles.sheetHandle, { backgroundColor: theme.outline }]} />
+          <Text style={[styles.sheetTitle, { color: theme.textPrimary }]}>Scan Bill</Text>
+
+          <TouchableOpacity
+            style={[styles.sheetOption, { borderBottomColor: theme.outlineVariant }]}
+            onPress={() => { setScanSheetVisible(false); handlePickImage('camera'); }}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="camera-outline" size={24} color={A} />
+            <Text style={[styles.sheetOptionText, { color: theme.textPrimary }]}>Take Photo</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.sheetOption}
+            onPress={() => { setScanSheetVisible(false); handlePickImage('library'); }}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="images-outline" size={24} color={A} />
+            <Text style={[styles.sheetOptionText, { color: theme.textPrimary }]}>Choose from Library</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+
+      {/* Review Scanned Items Modal */}
+      <Modal
+        animationType="slide"
+        transparent={false}
+        visible={reviewModalVisible}
+        onRequestClose={() => { setReviewModalVisible(false); setScannedItems([]); }}
+      >
+        <View style={[styles.reviewContainer, { backgroundColor: theme.background }]}>
+          {/* Header */}
+          <View style={[styles.reviewHeader, { borderBottomColor: theme.outlineVariant }]}>
+            <Text style={[styles.reviewTitle, { color: theme.textPrimary }]}>Review Scanned Items</Text>
+            <Text style={[styles.reviewSubtitle, { color: theme.textSecondary }]}>
+              Deselect or edit items before adding them
+            </Text>
+          </View>
+
+          {/* Body */}
+          <FlatList
+            data={scannedItems}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <ReviewItemRow
+                item={item}
+                accent={A}
+                theme={theme}
+                onToggle={(id) =>
+                  setScannedItems(prev =>
+                    prev.map(i => i.id === id ? { ...i, selected: !i.selected } : i)
+                  )
+                }
+                onNameChange={(id, v) =>
+                  setScannedItems(prev =>
+                    prev.map(i => i.id === id ? { ...i, name: v } : i)
+                  )
+                }
+                onPriceChange={(id, v) =>
+                  setScannedItems(prev =>
+                    prev.map(i => i.id === id ? { ...i, price: v } : i)
+                  )
+                }
+                onDelete={(id) =>
+                  setScannedItems(prev => prev.filter(i => i.id !== id))
+                }
+              />
+            )}
+            contentContainerStyle={{ paddingVertical: 8 }}
+          />
+
+          {/* Footer */}
+          <View style={[styles.reviewFooter, { borderTopColor: theme.outlineVariant, backgroundColor: theme.surface }]}>
+            <TouchableOpacity
+              style={[styles.reviewFooterBtn, { backgroundColor: theme.surfaceVariant }]}
+              onPress={() => { setReviewModalVisible(false); setScannedItems([]); }}
+            >
+              <Text style={[styles.reviewFooterBtnText, { color: A }]}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.reviewFooterBtn, { backgroundColor: A }]}
+              onPress={addScannedItems}
+            >
+              <Text style={[styles.reviewFooterBtnText, { color: theme.onPrimary }]}>
+                Add Selected ({scannedItems.filter(i => i.selected).length})
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </KeyboardAvoidingView>
   );
 }
@@ -688,17 +1014,31 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#56026B',
   },
-  addItemButton: {
-    padding: 18,
+  footerRow: {
+    flexDirection: 'row',
     marginTop: 12,
     marginHorizontal: 20,
     marginBottom: 20,
+    gap: 10,
+    alignItems: 'stretch',
+  },
+  addItemButton: {
+    flex: 1,
+    padding: 18,
     borderWidth: 2,
     borderColor: '#56026B',
     borderRadius: 16,
     borderStyle: 'dashed',
     backgroundColor: 'transparent',
     alignItems: 'center',
+  },
+  scanButton: {
+    width: 60,
+    borderWidth: 2,
+    borderRadius: 16,
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   addItemButtonText: {
     fontFamily: 'Ysabeau-SemiBold',
@@ -879,5 +1219,137 @@ const styles = StyleSheet.create({
     fontSize: 11,
     textTransform: 'lowercase',
     letterSpacing: 0.5,
+  },
+  // --- Scan loading overlay ---
+  loadingOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 16,
+  },
+  loadingText: {
+    fontFamily: 'Ysabeau-Regular',
+    fontSize: 17,
+  },
+  // --- Scan action sheet ---
+  sheetOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+  },
+  sheetContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 34,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    elevation: 10,
+  },
+  sheetHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 16,
+  },
+  sheetTitle: {
+    fontFamily: 'Ysabeau-Bold',
+    fontSize: 17,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  sheetOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    gap: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: 'transparent',
+  },
+  sheetOptionText: {
+    fontFamily: 'Ysabeau-Regular',
+    fontSize: 16,
+  },
+  // --- Review Modal ---
+  reviewContainer: {
+    flex: 1,
+  },
+  reviewHeader: {
+    paddingHorizontal: 20,
+    paddingTop: 52,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+  },
+  reviewTitle: {
+    fontFamily: 'Ysabeau-Bold',
+    fontSize: 24,
+    marginBottom: 4,
+  },
+  reviewSubtitle: {
+    fontFamily: 'Ysabeau-Regular',
+    fontSize: 14,
+  },
+  reviewFooter: {
+    flexDirection: 'row',
+    padding: 16,
+    gap: 12,
+    borderTopWidth: 1,
+  },
+  reviewFooterBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+  },
+  reviewFooterBtnText: {
+    fontFamily: 'Ysabeau-SemiBold',
+    fontSize: 15,
+  },
+  // --- ReviewItemRow ---
+  reviewRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 10,
+    marginHorizontal: 8,
+    marginVertical: 4,
+    borderRadius: 14,
+    gap: 8,
+  },
+  reviewCheckbox: {
+    width: 26,
+    height: 26,
+    borderRadius: 7,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  reviewNameInput: {
+    flex: 1,
+    fontFamily: 'Ysabeau-Regular',
+    fontSize: 15,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  reviewPriceInput: {
+    width: 72,
+    fontFamily: 'Ysabeau-Regular',
+    fontSize: 15,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    textAlign: 'right',
+  },
+  reviewDeleteBtn: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
