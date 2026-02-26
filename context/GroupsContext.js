@@ -60,7 +60,7 @@ export const GroupsProvider = ({ children }) => {
       people: [],
       tipValue: '',
       tipMode: 'money',
-      splitMode: 'equal',
+      splitMode: 'separate',
     };
     setGroups([...groups, newGroup]);
     return newGroup;

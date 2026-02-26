@@ -11,7 +11,6 @@ import {
   ScrollView,
   StatusBar,
   Pressable,
-  KeyboardAvoidingView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Swipeable } from 'react-native-gesture-handler';
@@ -21,6 +20,7 @@ import { useCurrency } from '../context/CurrencyContext';
 import { useGroups } from '../context/GroupsContext';
 import { useTheme } from '../context/ThemeContext';
 import { MAIN, ACCENT, SEARCH_BAR } from '../context/ThemeContext';
+import AppModal, { fieldStyles } from '../components/AppModal';
 
 // Icon mapping for group types
 const ICON_OPTIONS = [
@@ -332,122 +332,82 @@ export default function GroupsScreen({ navigation }) {
       </Modal>
 
       {/* New Group Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
+      <AppModal
         visible={modalVisible}
-        onRequestClose={() => { setModalVisible(false); setNewGroupName(''); setNewGroupEmoji('beer'); }}
+        onClose={() => { setModalVisible(false); setNewGroupName(''); setNewGroupEmoji('beer'); }}
+        title="New Group"
+        confirmLabel="Create"
+        onConfirm={addNewGroup}
       >
-        <KeyboardAvoidingView style={styles.modalContainer} behavior="padding" keyboardVerticalOffset={0}>
-          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setModalVisible(false); setNewGroupName(''); setNewGroupEmoji('beer'); }} />
-          <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>New Group</Text>
-              <TouchableOpacity style={[styles.modalCloseBtn, { backgroundColor: theme.surfaceVariant }]} onPress={() => { setModalVisible(false); setNewGroupName(''); setNewGroupEmoji('beer'); }}>
-                <Ionicons name="close" size={20} color={theme.textSecondary} />
-              </TouchableOpacity>
-            </View>
-            <View style={[styles.modalDivider, { backgroundColor: theme.outlineVariant }]} />
-
-            <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Icon</Text>
-            <View style={styles.emojiSelector}>
-              {ICON_OPTIONS.map((icon) => (
-                <TouchableOpacity
-                  key={icon.id}
-                  style={[
-                    styles.emojiOption,
-                    { 
-                      borderColor: theme.outline,
-                      backgroundColor: newGroupEmoji === icon.id ? theme.primaryContainer : theme.surfaceContainerHigh 
-                    },
-                    newGroupEmoji === icon.id && { borderColor: theme.primary }
-                  ]}
-                  onPress={() => setNewGroupEmoji(icon.id)}
-                >
-                  <GroupIcon iconId={icon.id} size={28} color={newGroupEmoji === icon.id ? theme.primary : theme.textSecondary} />
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Group Name</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
-              placeholder="Group name"
-              placeholderTextColor={theme.textSecondary}
-              value={newGroupName}
-              onChangeText={setNewGroupName}
-              autoFocus
-            />
+        <Text style={[fieldStyles.inputLabel, { color: theme.textSecondary }]}>Icon</Text>
+        <View style={styles.emojiSelector}>
+          {ICON_OPTIONS.map((icon) => (
             <TouchableOpacity
-              style={[styles.modalConfirmBtn, { backgroundColor: ACCENT }]}
-              onPress={addNewGroup}
+              key={icon.id}
+              style={[
+                styles.emojiOption,
+                {
+                  borderColor: theme.outline,
+                  backgroundColor: newGroupEmoji === icon.id ? theme.primaryContainer : theme.surfaceContainerHigh,
+                },
+                newGroupEmoji === icon.id && { borderColor: theme.primary },
+              ]}
+              onPress={() => setNewGroupEmoji(icon.id)}
             >
-              <Text style={[styles.modalConfirmText, { color: theme.onPrimary }]}>Create</Text>
+              <GroupIcon iconId={icon.id} size={28} color={newGroupEmoji === icon.id ? theme.primary : theme.textSecondary} />
             </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+          ))}
+        </View>
+
+        <Text style={[fieldStyles.inputLabel, { color: theme.textSecondary }]}>Group Name</Text>
+        <TextInput
+          style={[fieldStyles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
+          placeholder="Group name"
+          placeholderTextColor={theme.textSecondary}
+          value={newGroupName}
+          onChangeText={setNewGroupName}
+          autoFocus
+        />
+      </AppModal>
 
       {/* Edit Group Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
+      <AppModal
         visible={editingGroup !== null}
-        onRequestClose={() => {
-          setEditingGroup(null);
-          setEditGroupName('');
-          setEditGroupEmoji('beer');
-        }}
+        onClose={() => { setEditingGroup(null); setEditGroupName(''); setEditGroupEmoji('beer'); }}
+        title="Edit Group"
+        confirmLabel="Save"
+        onConfirm={saveEditGroup}
       >
-        <KeyboardAvoidingView style={styles.modalContainer} behavior="padding" keyboardVerticalOffset={0}>
-          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setEditingGroup(null); setEditGroupName(''); setEditGroupEmoji('beer'); }} />
-          <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Edit Group</Text>
-              <TouchableOpacity style={[styles.modalCloseBtn, { backgroundColor: theme.surfaceVariant }]} onPress={() => { setEditingGroup(null); setEditGroupName(''); setEditGroupEmoji('beer'); }}>
-                <Ionicons name="close" size={20} color={theme.textSecondary} />
-              </TouchableOpacity>
-            </View>
-            <View style={[styles.modalDivider, { backgroundColor: theme.outlineVariant }]} />
-
-            <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Icon</Text>
-            <View style={styles.emojiSelector}>
-              {ICON_OPTIONS.map((icon) => (
-                <TouchableOpacity
-                  key={icon.id}
-                  style={[
-                    styles.emojiOption,
-                    { 
-                      borderColor: theme.outline,
-                      backgroundColor: editGroupEmoji === icon.id ? theme.primaryContainer : theme.surfaceContainerHigh 
-                    },
-                    editGroupEmoji === icon.id && { borderColor: theme.primary }
-                  ]}
-                  onPress={() => setEditGroupEmoji(icon.id)}
-                >
-                  <GroupIcon iconId={icon.id} size={28} color={editGroupEmoji === icon.id ? theme.primary : theme.textSecondary} />
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Group Name</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
-              placeholder="Group name"
-              placeholderTextColor={theme.textSecondary}
-              value={editGroupName}
-              onChangeText={setEditGroupName}
-              autoFocus
-            />
+        <Text style={[fieldStyles.inputLabel, { color: theme.textSecondary }]}>Icon</Text>
+        <View style={styles.emojiSelector}>
+          {ICON_OPTIONS.map((icon) => (
             <TouchableOpacity
-              style={[styles.modalConfirmBtn, { backgroundColor: ACCENT }]}
-              onPress={saveEditGroup}
+              key={icon.id}
+              style={[
+                styles.emojiOption,
+                {
+                  borderColor: theme.outline,
+                  backgroundColor: editGroupEmoji === icon.id ? theme.primaryContainer : theme.surfaceContainerHigh,
+                },
+                editGroupEmoji === icon.id && { borderColor: theme.primary },
+              ]}
+              onPress={() => setEditGroupEmoji(icon.id)}
             >
-              <Text style={[styles.modalConfirmText, { color: theme.onPrimary }]}>Save</Text>
+              <GroupIcon iconId={icon.id} size={28} color={editGroupEmoji === icon.id ? theme.primary : theme.textSecondary} />
             </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+          ))}
+        </View>
+
+        <Text style={[fieldStyles.inputLabel, { color: theme.textSecondary }]}>Group Name</Text>
+        <TextInput
+          style={[fieldStyles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
+          placeholder="Group name"
+          placeholderTextColor={theme.textSecondary}
+          value={editGroupName}
+          onChangeText={setEditGroupName}
+          autoFocus
+        />
+      </AppModal>
     </SafeAreaView>
   );
 }
@@ -743,53 +703,6 @@ const styles = StyleSheet.create({
   },
 
   // ── Modal ───────────────────────────────────────────────
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
-  },
-  modalContent: {
-    width: '88%',
-    borderRadius: 32,
-    padding: 28,
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.18,
-    shadowRadius: 28,
-    elevation: 16,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontFamily: 'Ysabeau-Bold',
-    fontSize: 26,
-    fontWeight: '700',
-    letterSpacing: -0.3,
-  },
-  modalDivider: {
-    height: 1,
-    marginBottom: 24,
-  },
-  modalCloseBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  inputLabel: {
-    fontFamily: 'Ysabeau-Bold',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    marginBottom: 8,
-    marginTop: 16,
-  },
   emojiSelector: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -804,23 +717,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  input: {
-    fontFamily: 'Ysabeau-Regular',
-    borderRadius: 14,
-    padding: 16,
-    fontSize: 16,
-    marginBottom: 4,
-  },
-  modalConfirmBtn: {
-    borderRadius: 30,
-    paddingVertical: 18,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  modalConfirmText: {
-    fontFamily: 'Ysabeau-SemiBold',
-    fontSize: 17,
-    fontWeight: '600',
-    letterSpacing: 0.3,
-  },
 });
+

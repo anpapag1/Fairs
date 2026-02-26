@@ -21,6 +21,7 @@ import { useCurrency } from '../../context/CurrencyContext';
 import { useGroups } from '../../context/GroupsContext';
 import { useTheme } from '../../context/ThemeContext';
 import { ACCENT } from '../../context/ThemeContext';
+import AppModal, { fieldStyles } from '../../components/AppModal';
 
 // Shorthand so every interactive accent references one constant
 const A = ACCENT;
@@ -513,166 +514,101 @@ export default function ItemsTab({ route }) {
       </>
       
 
-      <Modal
-        animationType="fade"
-        transparent={true}
+      <AppModal
         visible={modalVisible}
-        onRequestClose={() => { setModalVisible(false); setNewItemName(''); setNewItemPrice(''); }}
+        onClose={() => { setModalVisible(false); setNewItemName(''); setNewItemPrice(''); }}
+        title="Add Item"
+        confirmLabel="Add"
+        onConfirm={addItem}
       >
-        <KeyboardAvoidingView style={styles.modalContainer} behavior="padding" keyboardVerticalOffset={0}>
-          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setModalVisible(false); setNewItemName(''); setNewItemPrice(''); }} />
-          <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Add Item</Text>
-              <TouchableOpacity style={[styles.modalCloseBtn, { backgroundColor: theme.surfaceVariant }]} onPress={() => { setModalVisible(false); setNewItemName(''); setNewItemPrice(''); }}>
-                <Ionicons name="close" size={20} color={theme.textSecondary} />
-              </TouchableOpacity>
-            </View>
-            <View style={[styles.modalDivider, { backgroundColor: theme.outlineVariant }]} />
+        <Text style={[fieldStyles.inputLabel, { color: theme.textSecondary }]}>Item Name</Text>
+        <TextInput
+          style={[fieldStyles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
+          placeholder="e.g., Pizza"
+          placeholderTextColor={theme.textSecondary}
+          value={newItemName}
+          onChangeText={setNewItemName}
+          autoFocus
+        />
 
-            <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Item Name</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
-              placeholder="e.g., Pizza"
-              placeholderTextColor={theme.textSecondary}
-              value={newItemName}
-              onChangeText={setNewItemName}
-              autoFocus
-            />
-
-            <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Price</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
-              placeholder="0.00"
-              placeholderTextColor={theme.textSecondary}
-              keyboardType="decimal-pad"
-              value={newItemPrice}
-              onChangeText={setNewItemPrice}
-            />
-
-            <TouchableOpacity
-              style={[styles.modalConfirmBtn, { backgroundColor: A }]}
-              onPress={addItem}
-            >
-              <Text style={[styles.modalConfirmText, { color: theme.onPrimary }]}>Add</Text>
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+        <Text style={[fieldStyles.inputLabel, { color: theme.textSecondary }]}>Price</Text>
+        <TextInput
+          style={[fieldStyles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
+          placeholder="0.00"
+          placeholderTextColor={theme.textSecondary}
+          keyboardType="decimal-pad"
+          value={newItemPrice}
+          onChangeText={setNewItemPrice}
+        />
+      </AppModal>
 
       {/* Edit Item Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
+      <AppModal
         visible={editingItem !== null}
-        onRequestClose={() => {
-          setEditingItem(null);
-          setEditItemName('');
-          setEditItemPrice('');
-        }}
+        onClose={() => { setEditingItem(null); setEditItemName(''); setEditItemPrice(''); }}
+        title="Edit Item"
+        confirmLabel="Save"
+        onConfirm={saveEditItem}
       >
-        <KeyboardAvoidingView style={styles.modalContainer} behavior="padding" keyboardVerticalOffset={0}>
-          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setEditingItem(null); setEditItemName(''); setEditItemPrice(''); }} />
-          <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Edit Item</Text>
-              <TouchableOpacity style={[styles.modalCloseBtn, { backgroundColor: theme.surfaceVariant }]} onPress={() => { setEditingItem(null); setEditItemName(''); setEditItemPrice(''); }}>
-                <Ionicons name="close" size={20} color={theme.textSecondary} />
-              </TouchableOpacity>
-            </View>
-            <View style={[styles.modalDivider, { backgroundColor: theme.outlineVariant }]} />
+        <Text style={[fieldStyles.inputLabel, { color: theme.textSecondary }]}>Item Name</Text>
+        <TextInput
+          style={[fieldStyles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
+          placeholder="e.g., Pizza"
+          placeholderTextColor={theme.textSecondary}
+          value={editItemName}
+          onChangeText={setEditItemName}
+          autoFocus
+        />
 
-            <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Item Name</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
-              placeholder="e.g., Pizza"
-              placeholderTextColor={theme.textSecondary}
-              value={editItemName}
-              onChangeText={setEditItemName}
-              autoFocus
-            />
-
-            <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Price</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
-              placeholder="0.00"
-              placeholderTextColor={theme.textSecondary}
-              keyboardType="decimal-pad"
-              value={editItemPrice}
-              onChangeText={setEditItemPrice}
-            />
-
-            <TouchableOpacity
-              style={[styles.modalConfirmBtn, { backgroundColor: A }]}
-              onPress={saveEditItem}
-            >
-              <Text style={[styles.modalConfirmText, { color: theme.onPrimary }]}>Save</Text>
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
-      </Modal>
+        <Text style={[fieldStyles.inputLabel, { color: theme.textSecondary }]}>Price</Text>
+        <TextInput
+          style={[fieldStyles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
+          placeholder="0.00"
+          placeholderTextColor={theme.textSecondary}
+          keyboardType="decimal-pad"
+          value={editItemPrice}
+          onChangeText={setEditItemPrice}
+        />
+      </AppModal>
 
       {/* Multiplier Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
+      <AppModal
         visible={multiplierModalVisible}
-        onRequestClose={() => {
-          setMultiplierModalVisible(false);
-          setMultiplierItem(null);
-          setMultiplierValue('');
-        }}
+        onClose={() => { setMultiplierModalVisible(false); setMultiplierItem(null); setMultiplierValue(''); }}
+        title="Set Quantity"
+        confirmLabel="Set"
+        onConfirm={saveMultiplier}
       >
-        <View style={styles.modalContainer}>
-          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setMultiplierModalVisible(false); setMultiplierItem(null); setMultiplierValue(''); }} />
-          <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Set Quantity</Text>
-              <TouchableOpacity style={[styles.modalCloseBtn, { backgroundColor: theme.surfaceVariant }]} onPress={() => { setMultiplierModalVisible(false); setMultiplierItem(null); setMultiplierValue(''); }}>
-                <Ionicons name="close" size={20} color={theme.textSecondary} />
-              </TouchableOpacity>
-            </View>
-            <View style={[styles.modalDivider, { backgroundColor: theme.outlineVariant }]} />
+        <View style={styles.counterContainer}>
+          <TouchableOpacity
+            style={[styles.counterButton, { backgroundColor: theme.primaryContainer, borderColor: theme.outline }]}
+            onPress={() => {
+              const currentValue = parseInt(multiplierValue) || 1;
+              if (currentValue > 1) {
+                setMultiplierValue(String(currentValue - 1));
+              }
+            }}
+          >
+            <Text style={[styles.counterButtonText, { color: theme.textPrimary }]}>−</Text>
+          </TouchableOpacity>
 
-            <View style={styles.counterContainer}>
-              <TouchableOpacity
-                style={[styles.counterButton, { backgroundColor: theme.primaryContainer, borderColor: theme.outline }]}
-                onPress={() => {
-                  const currentValue = parseInt(multiplierValue) || 1;
-                  if (currentValue > 1) {
-                    setMultiplierValue(String(currentValue - 1));
-                  }
-                }}
-              >
-                <Text style={[styles.counterButtonText, { color: theme.textPrimary }]}>−</Text>
-              </TouchableOpacity>
-
-              <View style={[styles.counterDisplay, { backgroundColor: ACCENT }]}>
-                <Text style={[styles.counterDisplayText, { color: theme.onPrimary }]}>
-                  {multiplierValue || '1'}
-                </Text>
-              </View>
-
-              <TouchableOpacity
-                style={[styles.counterButton, { backgroundColor: theme.primaryContainer, borderColor: theme.outline }]}
-                onPress={() => {
-                  const currentValue = parseInt(multiplierValue) || 1;
-                  setMultiplierValue(String(currentValue + 1));
-                }}
-              >
-                <Text style={[styles.counterButtonText, { color: theme.textPrimary }]}>+</Text>
-              </TouchableOpacity>
-            </View>
-
-            <TouchableOpacity
-              style={[styles.modalConfirmBtn, { backgroundColor: ACCENT }]}
-              onPress={saveMultiplier}
-            >
-              <Text style={[styles.modalConfirmText, { color: theme.onPrimary }]}>Set</Text>
-            </TouchableOpacity>
+          <View style={[styles.counterDisplay, { backgroundColor: ACCENT }]}>
+            <Text style={[styles.counterDisplayText, { color: theme.onPrimary }]}>
+              {multiplierValue || '1'}
+            </Text>
           </View>
+
+          <TouchableOpacity
+            style={[styles.counterButton, { backgroundColor: theme.primaryContainer, borderColor: theme.outline }]}
+            onPress={() => {
+              const currentValue = parseInt(multiplierValue) || 1;
+              setMultiplierValue(String(currentValue + 1));
+            }}
+          >
+            <Text style={[styles.counterButtonText, { color: theme.textPrimary }]}>+</Text>
+          </TouchableOpacity>
         </View>
-      </Modal>
+      </AppModal>
 
       {/* Scan Loading Overlay */}
       <Modal
@@ -1022,72 +958,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#56026B',
     letterSpacing: 0.5,
-  },
-  modalContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.65)',
-  },
-  modalContent: {
-    width: '88%',
-    borderRadius: 32,
-    padding: 28,
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.18,
-    shadowRadius: 28,
-    elevation: 16,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontFamily: 'Ysabeau-Bold',
-    fontSize: 26,
-    fontWeight: '700',
-    letterSpacing: -0.3,
-  },
-  modalDivider: {
-    height: 1,
-    marginBottom: 24,
-  },
-  modalCloseBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  inputLabel: {
-    fontFamily: 'Ysabeau-Bold',
-    fontSize: 11,
-    fontWeight: '700',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-    marginBottom: 8,
-    marginTop: 16,
-  },
-  input: {
-    fontFamily: 'Ysabeau-Regular',
-    borderRadius: 14,
-    padding: 16,
-    fontSize: 16,
-    marginBottom: 4,
-  },
-  modalConfirmBtn: {
-    borderRadius: 30,
-    paddingVertical: 18,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  modalConfirmText: {
-    fontFamily: 'Ysabeau-SemiBold',
-    fontSize: 17,
-    fontWeight: '600',
-    letterSpacing: 0.3,
   },
   counterContainer: {
     flexDirection: 'row',
