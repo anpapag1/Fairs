@@ -6,10 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   StatusBar,
-  Modal,
-  Pressable,
   Alert,
-  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Picker } from '@react-native-picker/picker';
@@ -22,6 +19,7 @@ import { useCurrency } from '../context/CurrencyContext';
 import { useTheme } from '../context/ThemeContext';
 import { MAIN, ACCENT } from '../context/ThemeContext';
 import { useGroups } from '../context/GroupsContext';
+import AppModal from '../components/AppModal';
 
 export default function SettingsScreen({ navigation }) {
   const { currencyCode, setCurrencyCode, currencies } = useCurrency();
@@ -33,7 +31,6 @@ export default function SettingsScreen({ navigation }) {
   const [importModalVisible, setImportModalVisible] = useState(false);
   const [importableGroups, setImportableGroups] = useState([]);
   const [selectedImportIds, setSelectedImportIds] = useState([]);
-  const [importing, setImporting] = useState(false);
 
   // ── Export ───────────────────────────────────────────────
   const handleExport = async () => {
@@ -91,13 +88,11 @@ export default function SettingsScreen({ navigation }) {
   };
 
   const confirmImport = () => {
-    setImporting(true);
     const toImport = importableGroups.filter(g => selectedImportIds.includes(g.id));
     importGroups(toImport);
     setImportModalVisible(false);
     setImportableGroups([]);
     setSelectedImportIds([]);
-    setImporting(false);
   };
 
   const themeOptions = [
@@ -215,65 +210,43 @@ export default function SettingsScreen({ navigation }) {
       </ScrollView>
 
       {/* Import selection modal */}
-      <Modal
-        transparent
-        animationType="fade"
+      <AppModal
         visible={importModalVisible}
-        onRequestClose={() => setImportModalVisible(false)}
+        onClose={() => setImportModalVisible(false)}
+        title="Import Groups"
+        confirmLabel={`Import (${selectedImportIds.length})`}
+        onConfirm={confirmImport}
+        confirmDisabled={selectedImportIds.length === 0}
       >
-        <View style={styles.importModalOverlay}>
-          <Pressable style={StyleSheet.absoluteFillObject} onPress={() => setImportModalVisible(false)} />
-          <View style={[styles.importModalCard, { backgroundColor: theme.surface }]} onStartShouldSetResponder={() => true}>
-            <Text style={[styles.importModalTitle, { color: theme.textPrimary }]}>Select groups to import</Text>
-            <Text style={[styles.importModalSub, { color: theme.textSecondary }]}>
-              {selectedImportIds.length} of {importableGroups.length} selected
-            </Text>
-            <ScrollView style={styles.importList} contentContainerStyle={{ paddingBottom: 8 }}>
-              {importableGroups.map(g => {
-                const checked = selectedImportIds.includes(g.id);
-                return (
-                  <TouchableOpacity
-                    key={g.id}
-                    style={[styles.importRow, { borderBottomColor: theme.outlineVariant }]}
-                    onPress={() => toggleImportGroup(g.id)}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons
-                      name={checked ? 'checkbox' : 'square-outline'}
-                      size={24}
-                      color={checked ? ACCENT : theme.textSecondary}
-                    />
-                    <View style={{ flex: 1, marginLeft: 14 }}>
-                      <Text style={[styles.importRowName, { color: theme.textPrimary }]}>{g.name}</Text>
-                      <Text style={[styles.importRowMeta, { color: theme.textSecondary }]}>
-                        {g.items?.length ?? 0} items · {g.people?.length ?? 0} people · {g.date}
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-            <View style={styles.importActions}>
+        <Text style={[styles.importModalSub, { color: theme.textSecondary }]}>
+          {selectedImportIds.length} of {importableGroups.length} selected
+        </Text>
+        <ScrollView style={styles.importList} contentContainerStyle={{ paddingBottom: 8 }}>
+          {importableGroups.map(g => {
+            const checked = selectedImportIds.includes(g.id);
+            return (
               <TouchableOpacity
-                style={[styles.importBtn, { backgroundColor: theme.surfaceVariant }]}
-                onPress={() => setImportModalVisible(false)}
+                key={g.id}
+                style={[styles.importRow, { borderBottomColor: theme.outlineVariant }]}
+                onPress={() => toggleImportGroup(g.id)}
+                activeOpacity={0.7}
               >
-                <Text style={[styles.importBtnText, { color: ACCENT }]}>Cancel</Text>
+                <Ionicons
+                  name={checked ? 'checkbox' : 'square-outline'}
+                  size={24}
+                  color={checked ? ACCENT : theme.textSecondary}
+                />
+                <View style={{ flex: 1, marginLeft: 14 }}>
+                  <Text style={[styles.importRowName, { color: theme.textPrimary }]}>{g.name}</Text>
+                  <Text style={[styles.importRowMeta, { color: theme.textSecondary }]}>
+                    {g.items?.length ?? 0} items · {g.people?.length ?? 0} people · {g.date}
+                  </Text>
+                </View>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.importBtn, { backgroundColor: ACCENT }]}
-                onPress={confirmImport}
-                disabled={selectedImportIds.length === 0 || importing}
-              >
-                {importing
-                  ? <ActivityIndicator color="#fff" size="small" />
-                  : <Text style={[styles.importBtnText, { color: '#fff' }]}>Import</Text>
-                }
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+            );
+          })}
+        </ScrollView>
+      </AppModal>
     </SafeAreaView>
   );
 }
@@ -399,33 +372,10 @@ const styles = StyleSheet.create({
   },
 
   // ── Import modal ─────────────────────────────────────────
-  importModalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  importModalCard: {
-    width: '88%',
-    maxHeight: '75%',
-    borderRadius: 24,
-    padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 12,
-  },
-  importModalTitle: {
-    fontFamily: 'Ysabeau-Bold',
-    fontSize: 22,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
   importModalSub: {
     fontFamily: 'Ysabeau-Regular',
     fontSize: 14,
-    marginBottom: 16,
+    marginBottom: 12,
   },
   importList: {
     maxHeight: 320,
@@ -445,22 +395,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Ysabeau-Regular',
     fontSize: 13,
     marginTop: 2,
-  },
-  importActions: {
-    flexDirection: 'row',
-    gap: 10,
-    marginTop: 20,
-  },
-  importBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 16,
-    alignItems: 'center',
-  },
-  importBtnText: {
-    fontFamily: 'Ysabeau-SemiBold',
-    fontSize: 16,
-    fontWeight: '600',
   },
 });
 

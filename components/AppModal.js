@@ -70,6 +70,7 @@ export const fieldStyles = StyleSheet.create({
 //   onClose       – () => void   called by backdrop tap & X btn
 //   title         – string
 //   confirmLabel  – string  (default "Confirm")
+//   confirmDisabled – boolean (default false)
 //   onConfirm     – () => void
 //   children      – form fields / custom content
 // ─────────────────────────────────────────────────────────────
@@ -79,6 +80,7 @@ export default function AppModal({
   title,
   confirmLabel = 'Confirm',
   onConfirm,
+  confirmDisabled = false,
   children,
 }) {
   const { theme } = useTheme();
@@ -128,8 +130,9 @@ export default function AppModal({
 
           {/* Confirm button */}
           <TouchableOpacity
-            style={[styles.confirmBtn, { backgroundColor: ACCENT }]}
+            style={[styles.confirmBtn, { backgroundColor: ACCENT, opacity: confirmDisabled ? 0.45 : 1 }]}
             onPress={onConfirm}
+            disabled={confirmDisabled}
           >
             <Text style={[styles.confirmText, { color: theme.onPrimary }]}>
               {confirmLabel}
