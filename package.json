@@ -46,6 +46,13 @@
     "react-native-worklets": "0.5.1"
   },
   "private": true,
+  "expo": {
+    "doctor": {
+      "reactNativeDirectoryCheck": {
+        "exclude": ["@react-native-ml-kit/text-recognition"]
+      }
+    }
+  },
   "devDependencies": {
     "babel-preset-expo": "~54.0.10",
     "baseline-browser-mapping": "^2.10.0",

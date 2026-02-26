@@ -44,11 +44,11 @@ async function generate(outputName, canvasSize, logoScale) {
   // icon.png — full bleed is fine for the square launcher icon
   await generate('icon.png',          1024, 1.0);
 
-  // adaptive-icon.png — keep logo well inside safe zone (≈52% to avoid squircle clipping)
-  await generate('adaptive-icon.png', 1024, 0.52);
+  // adaptive-icon.png — 62% gives a fuller logo while staying inside the squircle safe zone
+  await generate('adaptive-icon.png', 1024, 0.62);
 
-  // splash-icon.png — 1024px canvas, logo at 75% for crisp high-DPI rendering
-  await generate('splash-icon.png',   1024, 0.75);
+  // splash-icon.png — 95%: Android 12 splash API constrains icon to 288dp, fill it fully
+  await generate('splash-icon.png',   1024, 0.95);
 
   // favicon
   await generate('favicon.png',         48, 1.0);
