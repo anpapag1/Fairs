@@ -23,6 +23,7 @@ import { useGroups } from '../../context/GroupsContext';
 import { useTheme } from '../../context/ThemeContext';
 import { ACCENT } from '../../context/ThemeContext';
 import AppModal, { fieldStyles } from '../../components/AppModal';
+import BottomDrawer from '../../components/BottomDrawer';
 
 // Shorthand so every interactive accent references one constant
 const A = ACCENT;
@@ -770,62 +771,43 @@ export default function ItemsTab({ route }) {
       </Modal>
 
       {/* Scan Bill Action Sheet */}
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={scanSheetVisible}
-        onRequestClose={() => setScanSheetVisible(false)}
-      >
-        <Pressable
-          style={styles.sheetOverlay}
-          onPress={() => setScanSheetVisible(false)}
-        />
-        <View style={[styles.sheetContainer, { backgroundColor: theme.background }]}>
-          <View style={[styles.sheetHandle, { backgroundColor: theme.outline }]} />
-          <Text style={[styles.sheetTitle, { color: theme.textPrimary }]}>Scan Bill</Text>
-          <Text style={[styles.sheetSubtitle, { color: theme.textSecondary }]}>Import a photo of your bill to auto-detect items</Text>
+      <BottomDrawer visible={scanSheetVisible} onClose={() => setScanSheetVisible(false)}>
+        <Text style={[styles.sheetTitle, { color: theme.textPrimary }]}>Scan Bill</Text>
+        <Text style={[styles.sheetSubtitle, { color: theme.textSecondary }]}>Import a photo of your bill to auto-detect items</Text>
 
-          <View style={styles.sheetOptions}>
-            <TouchableOpacity
-              style={[styles.sheetOptionCard, { backgroundColor: theme.surface }]}
-              onPress={() => { setScanSheetVisible(false); handlePickImage('camera'); }}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.sheetOptionIcon, { backgroundColor: theme.primaryContainer }]}>
-                <Ionicons name="camera-outline" size={26} color={A} />
-              </View>
-              <View style={styles.sheetOptionText}>
-                <Text style={[styles.sheetOptionTitle, { color: theme.textPrimary }]}>Take Photo</Text>
-                <Text style={[styles.sheetOptionDesc, { color: theme.textSecondary }]}>Use your camera to photograph the bill</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.sheetOptionCard, { backgroundColor: theme.surface }]}
-              onPress={() => { setScanSheetVisible(false); handlePickImage('library'); }}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.sheetOptionIcon, { backgroundColor: theme.primaryContainer }]}>
-                <Ionicons name="images-outline" size={26} color={A} />
-              </View>
-              <View style={styles.sheetOptionText}>
-                <Text style={[styles.sheetOptionTitle, { color: theme.textPrimary }]}>Choose from Library</Text>
-                <Text style={[styles.sheetOptionDesc, { color: theme.textSecondary }]}>Pick an existing photo from your gallery</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
-            </TouchableOpacity>
-          </View>
-
+        <View style={styles.sheetOptions}>
           <TouchableOpacity
-            style={[styles.sheetCancelButton, { backgroundColor: theme.surface }]}
-            onPress={() => setScanSheetVisible(false)}
+            style={[styles.sheetOptionCard, { backgroundColor: theme.primaryContainer }]}
+            onPress={() => { setScanSheetVisible(false); handlePickImage('camera'); }}
             activeOpacity={0.7}
           >
-            <Text style={[styles.sheetCancelText, { color: theme.textPrimary }]}>Cancel</Text>
+            <View style={[styles.sheetOptionIcon, { backgroundColor: theme.accent }]}>
+              <Ionicons name="camera-outline" size={26} color={theme.onPrimary} />
+            </View>
+            <View style={styles.sheetOptionText}>
+              <Text style={[styles.sheetOptionTitle, { color: theme.textPrimary }]}>Take Photo</Text>
+              <Text style={[styles.sheetOptionDesc, { color: theme.textSecondary }]}>Use your camera to photograph the bill</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.sheetOptionCard, { backgroundColor: theme.primaryContainer }]}
+            onPress={() => { setScanSheetVisible(false); handlePickImage('library'); }}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.sheetOptionIcon, { backgroundColor: theme.accent }]}>
+              <Ionicons name="images-outline" size={26} color={theme.onPrimary} />
+            </View>
+            <View style={styles.sheetOptionText}>
+              <Text style={[styles.sheetOptionTitle, { color: theme.textPrimary }]}>Choose from Library</Text>
+              <Text style={[styles.sheetOptionDesc, { color: theme.textSecondary }]}>Pick an existing photo from your gallery</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
           </TouchableOpacity>
         </View>
-      </Modal>
+
+      </BottomDrawer>
 
       {/* Review Scanned Items Modal */}
       <Modal
@@ -855,7 +837,7 @@ export default function ItemsTab({ route }) {
             renderItem={({ item }) => (
               <ReviewItemRow
                 item={item}
-                accent={A}
+                accent={theme.accent}
                 theme={theme}
                 currencySymbol={currencySymbol}
                 onToggle={(id) =>
@@ -1287,6 +1269,8 @@ const styles = StyleSheet.create({
   sheetOptions: {
     gap: 10,
     marginBottom: 12,
+    marginHorizontal: 20,
+
   },
   sheetOptionCard: {
     flexDirection: 'row',
@@ -1316,6 +1300,7 @@ const styles = StyleSheet.create({
   },
   sheetCancelButton: {
     marginTop: 4,
+    marginHorizontal: 20,
     paddingVertical: 16,
     borderRadius: 18,
     alignItems: 'center',

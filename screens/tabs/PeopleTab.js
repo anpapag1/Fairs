@@ -6,14 +6,12 @@ import {
   TouchableOpacity, 
   TextInput,
   FlatList,
-  Modal,
   ScrollView,
   Animated,
-  Pressable,
-  PanResponder,
-  Dimensions,
 } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
+import { Ionicons } from '@expo/vector-icons';
+import BottomDrawer from '../../components/BottomDrawer';
 import AppModal, { fieldStyles } from '../../components/AppModal';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useGroups } from '../../context/GroupsContext';
@@ -38,45 +36,6 @@ export default function PeopleTab({ route }) {
   
   // Store refs for all swipeable items
   const swipeableRefs = useRef({});
-
-  // Drag-to-dismiss for item selection modal
-  const SCREEN_HEIGHT = Dimensions.get('window').height;
-  const modalSlideY = useRef(new Animated.Value(0)).current;
-  const isClosingModal = useRef(false);
-
-  const closeModal = () => {
-    if (isClosingModal.current) return;
-    isClosingModal.current = true;
-    Animated.timing(modalSlideY, {
-      toValue: SCREEN_HEIGHT,
-      duration: 260,
-      useNativeDriver: true,
-    }).start(() => {
-      setItemSelectionModalVisible(false);
-      isClosingModal.current = false;
-    });
-  };
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, gs) => gs.dy > 5,
-      onPanResponderMove: (_, gs) => {
-        if (gs.dy > 0) modalSlideY.setValue(gs.dy);
-      },
-      onPanResponderRelease: (_, gs) => {
-        if (gs.dy > 100 || gs.vy > 0.5) {
-          closeModal();
-        } else {
-          Animated.spring(modalSlideY, {
-            toValue: 0,
-            useNativeDriver: true,
-            bounciness: 6,
-          }).start();
-        }
-      },
-    })
-  ).current;
   
   const total = calculateGroupTotal(group.id);
   const items = currentGroup?.items || [];
@@ -246,16 +205,8 @@ export default function PeopleTab({ route }) {
   };
 
   const openItemSelection = (person) => {
-    isClosingModal.current = false;
-    modalSlideY.setValue(SCREEN_HEIGHT);
     setSelectedPerson(person);
     setItemSelectionModalVisible(true);
-    Animated.spring(modalSlideY, {
-      toValue: 0,
-      useNativeDriver: true,
-      bounciness: 6,
-      speed: 14,
-    }).start();
   };
 
   const getSelectedItemNames = (person) => {
@@ -473,18 +424,15 @@ export default function PeopleTab({ route }) {
     return (
       <TouchableOpacity
         key={itemId}
-        style={[styles.itemCheckboxRow, { borderBottomColor: theme.outlineVariant }]}
+        style={[styles.itemCard, { backgroundColor: theme.primaryContainer, opacity: isSelected ? 1 : 0.55 }]}
         onPress={() => toggleItemForPerson(selectedPerson.id, itemId)}
+        activeOpacity={0.75}
       >
-        <View style={[
-          styles.checkbox, 
-          { borderColor: theme.outline },
-          isSelected && { backgroundColor: ACCENT, borderColor: ACCENT }
-        ]}>
-          {isSelected && <Text style={styles.checkmark}>✓</Text>}
+        <View style={[styles.itemCardCheckbox, { borderColor: ACCENT, backgroundColor: isSelected ? ACCENT : 'transparent' }]}>
+          {isSelected && <Ionicons name="checkmark" size={14} color={theme.onPrimary} />}
         </View>
-        <Text style={[styles.itemCheckboxName, { color: theme.textPrimary }]}>{itemName}</Text>
-        <Text style={[styles.itemCheckboxPrice, { color: theme.textSecondary }]}>{currencySymbol}{itemPrice.toFixed(2)}</Text>
+        <Text style={[styles.itemCardName, { color: theme.textPrimary }]}>{itemName}</Text>
+        <Text style={[styles.itemCardPrice, { color: theme.textSecondary }]}>{currencySymbol}{itemPrice.toFixed(2)}</Text>
       </TouchableOpacity>
     );
   };
@@ -649,62 +597,63 @@ export default function PeopleTab({ route }) {
         />
       </AppModal>
 
-      {/* Item Selection Modal */}
-      <Modal
-        animationType="none"
-        transparent={true}
+      {/* Item Selection Drawer */}
+      <BottomDrawer
         visible={itemSelectionModalVisible}
-        onRequestClose={closeModal}
+        onClose={() => setItemSelectionModalVisible(false)}
+        maxHeightPercent={0.88}
       >
-        <Pressable style={styles.itemModalContainer} onPress={closeModal}>
-          <Animated.View
-            style={[styles.itemModalContent, { backgroundColor: theme.surface, transform: [{ translateY: modalSlideY }] }]}
-            onStartShouldSetResponder={() => true}
-          >
-            <View {...panResponder.panHandlers}>
-              <View style={[styles.itemModalHandle]} />
-              <View style={[styles.itemModalHeader, { borderBottomColor: theme.outlineVariant }]}>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.itemModalTitle, { color: ACCENT }]}>
-                    {selectedPerson?.name}
-                  </Text>
-                  <Text style={[styles.itemModalSubtitle, { color: theme.textSecondary }]}>
-                    Select items this person consumed
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  style={[styles.selectAllButton, { borderColor: isAllSelected ? theme.outline : ACCENT }]}
-                  onPress={selectAllItems}
-                  activeOpacity={0.7}
-                >
-                  <Text style={[styles.selectAllText, { color: isAllSelected ? theme.textSecondary : ACCENT }]}>
-                    {isAllSelected ? 'Clear all' : 'Select all'}
-                  </Text>
-                </TouchableOpacity>
+            <View style={[styles.itemModalHeader, { borderBottomColor: theme.outlineVariant }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.itemModalTitle, { color: ACCENT }]}>
+                  {selectedPerson?.name}
+                </Text>
+                <Text style={[styles.itemModalSubtitle, { color: theme.textSecondary }]}>
+                  {allItemIds.filter(id => selectedPerson?.selectedItems?.includes(id)).length} of {allItemIds.length} item{allItemIds.length !== 1 ? 's' : ''} selected
+                </Text>
               </View>
+              <TouchableOpacity
+                style={[styles.selectAllButton, { borderColor: isAllSelected ? theme.outline : ACCENT }]}
+                onPress={selectAllItems}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.selectAllText, { color: isAllSelected ? theme.textSecondary : ACCENT }]}>
+                  {isAllSelected ? 'Clear all' : 'Select all'}
+                </Text>
+              </TouchableOpacity>
             </View>
-            
-            <ScrollView style={styles.itemsList}>
+
+            <ScrollView style={styles.itemsList} contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 8 }}>
               {items.length > 0 ? (
                 <>
                   {items.map(item => renderItemCheckbox(item))}
-                  {tipValue && parseFloat(tipValue) > 0 && (
-                    <>
-                      <View style={[styles.divider, { backgroundColor: theme.outlineVariant }]} />
-                      {renderItemCheckbox(null, true)}
-                    </>
-                  )}
+                  {tipValue && parseFloat(tipValue) > 0 && renderItemCheckbox(null, true)}
                 </>
               ) : (
                 <View style={styles.noItemsContainer}>
-                  <Text style={[styles.noItemsText, { color: theme.textSecondary }]}>No items in this bill</Text>
+                  <Ionicons name="receipt-outline" size={48} color={theme.textSecondary} style={{ opacity: 0.4, marginBottom: 8 }} />
+                  <Text style={[styles.noItemsText, { color: theme.textPrimary }]}>No items in this bill</Text>
                   <Text style={[styles.noItemsSubtext, { color: theme.textSecondary }]}>Add items in the Items tab first</Text>
                 </View>
               )}
             </ScrollView>
-          </Animated.View>
-        </Pressable>
-      </Modal>
+
+            <View style={[styles.itemModalFooter, { borderTopColor: theme.outlineVariant }]}>
+              <View style={styles.itemModalFooterTotal}>
+                <Text style={[styles.itemModalFooterLabel, { color: theme.textSecondary }]}>Total for {selectedPerson?.name}</Text>
+                <Text style={[styles.itemModalFooterAmount, { color: ACCENT }]}>
+                  {currencySymbol}{selectedPerson ? calculatePersonAmount(selectedPerson).toFixed(2) : '0.00'}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.itemModalDoneBtn, { backgroundColor: ACCENT }]}
+                onPress={() => setItemSelectionModalVisible(false)}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.itemModalDoneBtnText, { color: theme.onPrimary }]}>Done</Text>
+              </TouchableOpacity>
+            </View>
+      </BottomDrawer>
     </View>
   );
 }
@@ -1087,15 +1036,13 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   itemModalTitle: {
+    fontFamily: 'Ysabeau-Bold',
     fontSize: 26,
-    fontWeight: '700',
     marginBottom: 3,
-    letterSpacing: 0.2,
   },
   itemModalSubtitle: {
+    fontFamily: 'Ysabeau-Regular',
     fontSize: 13,
-    fontWeight: '400',
-    letterSpacing: 0.1,
   },
   selectAllButton: {
     borderWidth: 1.5,
@@ -1115,56 +1062,77 @@ const styles = StyleSheet.create({
   itemsList: {
     maxHeight: 400,
   },
-  itemCheckboxRow: {
+  itemCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 18,
-    borderBottomWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    marginVertical: 5,
+    borderRadius: 16,
+    gap: 12,
   },
-  checkbox: {
-    width: 32,
-    height: 32,
-    borderWidth: 2,
+  itemCardCheckbox: {
+    width: 26,
+    height: 26,
     borderRadius: 8,
-    marginRight: 16,
-    justifyContent: 'center',
+    borderWidth: 2,
     alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
   },
-  checkmark: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: '700',
-  },
-  itemCheckboxName: {
+  itemCardName: {
     flex: 1,
-    fontSize: 17,
-    color: '#1C1B1F',
-    fontWeight: '500',
+    fontFamily: 'Ysabeau-SemiBold',
+    fontSize: 16,
   },
-  itemCheckboxPrice: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: '#1C1B1F',
+  itemCardPrice: {
+    fontFamily: 'Ysabeau-Regular',
+    fontSize: 15,
+    flexShrink: 0,
   },
-  divider: {
-    height: 1,
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    marginVertical: 8,
+  itemModalFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderTopWidth: 1,
+    gap: 12,
+  },
+  itemModalFooterTotal: {
+    flex: 1,
+  },
+  itemModalFooterLabel: {
+    fontFamily: 'Ysabeau-Regular',
+    fontSize: 13,
+    marginBottom: 2,
+  },
+  itemModalFooterAmount: {
+    fontFamily: 'Ysabeau-Bold',
+    fontSize: 22,
+  },
+  itemModalDoneBtn: {
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  itemModalDoneBtnText: {
+    fontFamily: 'Ysabeau-SemiBold',
+    fontSize: 16,
   },
   noItemsContainer: {
     padding: 40,
     alignItems: 'center',
   },
   noItemsText: {
-    fontSize: 16,
-    color: '#79747E',
+    fontFamily: 'Ysabeau-SemiBold',
+    fontSize: 17,
     marginBottom: 4,
-    fontWeight: '500',
   },
   noItemsSubtext: {
+    fontFamily: 'Ysabeau-Regular',
     fontSize: 14,
-    color: '#CAC4D0',
-    fontWeight: '400',
   },
   doneButton: {
     margin: 20,
