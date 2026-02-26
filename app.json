@@ -20,7 +20,7 @@
       "package": "com.fairs.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ac45ff"
+        "backgroundColor": "#B953D3"
       },
       "edgeToEdgeEnabled": true
     },

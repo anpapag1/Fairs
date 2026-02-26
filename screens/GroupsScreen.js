@@ -333,16 +333,22 @@ export default function GroupsScreen({ navigation }) {
 
       {/* New Group Modal */}
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent={true}
         visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
+        onRequestClose={() => { setModalVisible(false); setNewGroupName(''); setNewGroupEmoji('beer'); }}
       >
         <KeyboardAvoidingView style={styles.modalContainer} behavior="padding" keyboardVerticalOffset={0}>
           <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setModalVisible(false); setNewGroupName(''); setNewGroupEmoji('beer'); }} />
           <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
-            <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>New Group</Text>
-            
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>New Group</Text>
+              <TouchableOpacity style={[styles.modalCloseBtn, { backgroundColor: theme.surfaceVariant }]} onPress={() => { setModalVisible(false); setNewGroupName(''); setNewGroupEmoji('beer'); }}>
+                <Ionicons name="close" size={20} color={theme.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            <View style={[styles.modalDivider, { backgroundColor: theme.outlineVariant }]} />
+
             <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Icon</Text>
             <View style={styles.emojiSelector}>
               {ICON_OPTIONS.map((icon) => (
@@ -365,38 +371,26 @@ export default function GroupsScreen({ navigation }) {
 
             <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Group Name</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
+              style={[styles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
               placeholder="Group name"
               placeholderTextColor={theme.textSecondary}
               value={newGroupName}
               onChangeText={setNewGroupName}
               autoFocus
             />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.surfaceVariant }]}
-                onPress={() => {
-                  setModalVisible(false);
-                  setNewGroupName('');
-                  setNewGroupEmoji('beer');
-                }}
-              >
-                <Text style={[styles.cancelButtonText, { color: ACCENT }]}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.createButton, { backgroundColor: ACCENT }]}
-                onPress={addNewGroup}
-              >
-                <Text style={[styles.createButtonText, { color: theme.onPrimary }]}>Create</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              style={[styles.modalConfirmBtn, { backgroundColor: ACCENT }]}
+              onPress={addNewGroup}
+            >
+              <Text style={[styles.modalConfirmText, { color: theme.onPrimary }]}>Create</Text>
+            </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
       </Modal>
 
       {/* Edit Group Modal */}
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent={true}
         visible={editingGroup !== null}
         onRequestClose={() => {
@@ -408,8 +402,14 @@ export default function GroupsScreen({ navigation }) {
         <KeyboardAvoidingView style={styles.modalContainer} behavior="padding" keyboardVerticalOffset={0}>
           <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setEditingGroup(null); setEditGroupName(''); setEditGroupEmoji('beer'); }} />
           <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
-            <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Edit Group</Text>
-            
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Edit Group</Text>
+              <TouchableOpacity style={[styles.modalCloseBtn, { backgroundColor: theme.surfaceVariant }]} onPress={() => { setEditingGroup(null); setEditGroupName(''); setEditGroupEmoji('beer'); }}>
+                <Ionicons name="close" size={20} color={theme.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            <View style={[styles.modalDivider, { backgroundColor: theme.outlineVariant }]} />
+
             <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Icon</Text>
             <View style={styles.emojiSelector}>
               {ICON_OPTIONS.map((icon) => (
@@ -432,31 +432,19 @@ export default function GroupsScreen({ navigation }) {
 
             <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Group Name</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
+              style={[styles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
               placeholder="Group name"
               placeholderTextColor={theme.textSecondary}
               value={editGroupName}
               onChangeText={setEditGroupName}
               autoFocus
             />
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.surfaceVariant }]}
-                onPress={() => {
-                  setEditingGroup(null);
-                  setEditGroupName('');
-                  setEditGroupEmoji('beer');
-                }}
-              >
-                <Text style={[styles.cancelButtonText, { color: ACCENT }]}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.createButton, { backgroundColor: ACCENT }]}
-                onPress={saveEditGroup}
-              >
-                <Text style={[styles.createButtonText, { color: theme.onPrimary }]}>Save</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity
+              style={[styles.modalConfirmBtn, { backgroundColor: ACCENT }]}
+              onPress={saveEditGroup}
+            >
+              <Text style={[styles.modalConfirmText, { color: theme.onPrimary }]}>Save</Text>
+            </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -759,32 +747,48 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
   },
   modalContent: {
     width: '88%',
-    borderRadius: 24,
-    padding: 24,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 12,
+    borderRadius: 32,
+    padding: 28,
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.18,
+    shadowRadius: 28,
+    elevation: 16,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
   },
   modalTitle: {
     fontFamily: 'Ysabeau-Bold',
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '700',
-    marginBottom: 20,
     letterSpacing: -0.3,
+  },
+  modalDivider: {
+    height: 1,
+    marginBottom: 24,
+  },
+  modalCloseBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   inputLabel: {
     fontFamily: 'Ysabeau-Bold',
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '700',
-    marginBottom: 10,
-    marginTop: 4,
-    letterSpacing: 0.4,
+    letterSpacing: 0.8,
     textTransform: 'uppercase',
+    marginBottom: 8,
+    marginTop: 16,
   },
   emojiSelector: {
     flexDirection: 'row',
@@ -802,35 +806,21 @@ const styles = StyleSheet.create({
   },
   input: {
     fontFamily: 'Ysabeau-Regular',
-    borderWidth: 2,
     borderRadius: 14,
     padding: 16,
     fontSize: 16,
-    marginBottom: 24,
+    marginBottom: 4,
   },
-  modalButtons: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  modalButton: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 20,
+  modalConfirmBtn: {
+    borderRadius: 30,
+    paddingVertical: 18,
     alignItems: 'center',
-    marginHorizontal: 0,
+    marginTop: 8,
   },
-  cancelButton: {},
-  cancelButtonText: {
+  modalConfirmText: {
     fontFamily: 'Ysabeau-SemiBold',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  createButton: {},
-  createButtonText: {
-    fontFamily: 'Ysabeau-SemiBold',
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
 });

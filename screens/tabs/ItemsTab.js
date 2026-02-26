@@ -514,61 +514,55 @@ export default function ItemsTab({ route }) {
       
 
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent={true}
         visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
+        onRequestClose={() => { setModalVisible(false); setNewItemName(''); setNewItemPrice(''); }}
       >
         <KeyboardAvoidingView style={styles.modalContainer} behavior="padding" keyboardVerticalOffset={0}>
           <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setModalVisible(false); setNewItemName(''); setNewItemPrice(''); }} />
           <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
-            <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Add Item</Text>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Add Item</Text>
+              <TouchableOpacity style={[styles.modalCloseBtn, { backgroundColor: theme.surfaceVariant }]} onPress={() => { setModalVisible(false); setNewItemName(''); setNewItemPrice(''); }}>
+                <Ionicons name="close" size={20} color={theme.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            <View style={[styles.modalDivider, { backgroundColor: theme.outlineVariant }]} />
 
             <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Item Name</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
+              style={[styles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
               placeholder="e.g., Pizza"
               placeholderTextColor={theme.textSecondary}
               value={newItemName}
               onChangeText={setNewItemName}
               autoFocus
             />
-            
+
             <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Price</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
+              style={[styles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
               placeholder="0.00"
               placeholderTextColor={theme.textSecondary}
               keyboardType="decimal-pad"
               value={newItemPrice}
               onChangeText={setNewItemPrice}
             />
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.surfaceVariant }]}
-                onPress={() => {
-                  setModalVisible(false);
-                  setNewItemName('');
-                  setNewItemPrice('');
-                }}
-              >
-                <Text style={[styles.cancelButtonText, { color: A }]}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.createButton, { backgroundColor: A }]}
-                onPress={addItem}
-              >
-                <Text style={[styles.createButtonText, { color: theme.onPrimary }]}>Add</Text>
-              </TouchableOpacity>
-            </View>
+
+            <TouchableOpacity
+              style={[styles.modalConfirmBtn, { backgroundColor: A }]}
+              onPress={addItem}
+            >
+              <Text style={[styles.modalConfirmText, { color: theme.onPrimary }]}>Add</Text>
+            </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
       </Modal>
 
       {/* Edit Item Modal */}
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent={true}
         visible={editingItem !== null}
         onRequestClose={() => {
@@ -580,11 +574,17 @@ export default function ItemsTab({ route }) {
         <KeyboardAvoidingView style={styles.modalContainer} behavior="padding" keyboardVerticalOffset={0}>
           <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setEditingItem(null); setEditItemName(''); setEditItemPrice(''); }} />
           <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
-            <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Edit Item</Text>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Edit Item</Text>
+              <TouchableOpacity style={[styles.modalCloseBtn, { backgroundColor: theme.surfaceVariant }]} onPress={() => { setEditingItem(null); setEditItemName(''); setEditItemPrice(''); }}>
+                <Ionicons name="close" size={20} color={theme.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            <View style={[styles.modalDivider, { backgroundColor: theme.outlineVariant }]} />
 
             <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Item Name</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
+              style={[styles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
               placeholder="e.g., Pizza"
               placeholderTextColor={theme.textSecondary}
               value={editItemName}
@@ -594,32 +594,20 @@ export default function ItemsTab({ route }) {
 
             <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Price</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.outline, backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
+              style={[styles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
               placeholder="0.00"
               placeholderTextColor={theme.textSecondary}
               keyboardType="decimal-pad"
               value={editItemPrice}
               onChangeText={setEditItemPrice}
             />
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.surfaceVariant }]}
-                onPress={() => {
-                  setEditingItem(null);
-                  setEditItemName('');
-                  setEditItemPrice('');
-                }}
-              >
-                <Text style={[styles.cancelButtonText, { color: A }]}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.createButton, { backgroundColor: A }]}
-                onPress={saveEditItem}
-              >
-                <Text style={[styles.createButtonText, { color: theme.onPrimary }]}>Save</Text>
-              </TouchableOpacity>
-            </View>
+
+            <TouchableOpacity
+              style={[styles.modalConfirmBtn, { backgroundColor: A }]}
+              onPress={saveEditItem}
+            >
+              <Text style={[styles.modalConfirmText, { color: theme.onPrimary }]}>Save</Text>
+            </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -637,8 +625,14 @@ export default function ItemsTab({ route }) {
       >
         <View style={styles.modalContainer}>
           <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setMultiplierModalVisible(false); setMultiplierItem(null); setMultiplierValue(''); }} />
-            <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
+          <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
+            <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Set Quantity</Text>
+              <TouchableOpacity style={[styles.modalCloseBtn, { backgroundColor: theme.surfaceVariant }]} onPress={() => { setMultiplierModalVisible(false); setMultiplierItem(null); setMultiplierValue(''); }}>
+                <Ionicons name="close" size={20} color={theme.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            <View style={[styles.modalDivider, { backgroundColor: theme.outlineVariant }]} />
 
             <View style={styles.counterContainer}>
               <TouchableOpacity
@@ -669,26 +663,14 @@ export default function ItemsTab({ route }) {
                 <Text style={[styles.counterButtonText, { color: theme.textPrimary }]}>+</Text>
               </TouchableOpacity>
             </View>
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.surfaceVariant }]}
-                onPress={() => {
-                  setMultiplierModalVisible(false);
-                  setMultiplierItem(null);
-                  setMultiplierValue('');
-                }}
-              >
-                <Text style={[styles.cancelButtonText, { color: ACCENT }]}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.createButton, { backgroundColor: ACCENT }]}
-                onPress={saveMultiplier}
-              >
-                <Text style={[styles.createButtonText, { color: theme.onPrimary }]}>Save</Text>
-              </TouchableOpacity>
-            </View>
-            </View>
+
+            <TouchableOpacity
+              style={[styles.modalConfirmBtn, { backgroundColor: ACCENT }]}
+              onPress={saveMultiplier}
+            >
+              <Text style={[styles.modalConfirmText, { color: theme.onPrimary }]}>Set</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
 
@@ -1045,65 +1027,67 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
   },
   modalContent: {
     width: '88%',
-    borderRadius: 24,
-    padding: 24,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 12,
+    borderRadius: 32,
+    padding: 28,
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.18,
+    shadowRadius: 28,
+    elevation: 16,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
   },
   modalTitle: {
     fontFamily: 'Ysabeau-Bold',
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '700',
-    marginBottom: 20,
     letterSpacing: -0.3,
+  },
+  modalDivider: {
+    height: 1,
+    marginBottom: 24,
+  },
+  modalCloseBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   inputLabel: {
     fontFamily: 'Ysabeau-Bold',
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '700',
-    marginBottom: 10,
-    marginTop: 4,
-    letterSpacing: 0.4,
+    letterSpacing: 0.8,
     textTransform: 'uppercase',
+    marginBottom: 8,
+    marginTop: 16,
   },
   input: {
     fontFamily: 'Ysabeau-Regular',
-    borderWidth: 2,
     borderRadius: 14,
     padding: 16,
     fontSize: 16,
-    marginBottom: 24,
+    marginBottom: 4,
   },
-  modalButtons: {
-    flexDirection: 'row',
-    gap: 16,
-    marginTop: 4,
-  },
-  modalButton: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 20,
+  modalConfirmBtn: {
+    borderRadius: 30,
+    paddingVertical: 18,
     alignItems: 'center',
+    marginTop: 8,
   },
-  cancelButton: {},
-  cancelButtonText: {
+  modalConfirmText: {
     fontFamily: 'Ysabeau-SemiBold',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  createButton: {},
-  createButtonText: {
-    fontFamily: 'Ysabeau-SemiBold',
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
   counterContainer: {
     flexDirection: 'row',

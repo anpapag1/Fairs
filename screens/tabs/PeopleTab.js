@@ -15,6 +15,7 @@ import {
   KeyboardAvoidingView,
 } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
+import { Ionicons } from '@expo/vector-icons';
 import { useCurrency } from '../../context/CurrencyContext';
 import { useGroups } from '../../context/GroupsContext';
 import { useTheme, MAIN, ACCENT } from '../../context/ThemeContext';
@@ -613,50 +614,45 @@ export default function PeopleTab({ route }) {
 
       {/* Add Person Modal */}
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent={true}
         visible={modalVisible}
-        onRequestClose={() => setModalVisible(false)}
+        onRequestClose={() => { setModalVisible(false); setNewPersonName(''); }}
       >
         <KeyboardAvoidingView style={styles.modalContainer} behavior="padding" keyboardVerticalOffset={0}>
           <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setModalVisible(false); setNewPersonName(''); }} />
           <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
-            <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Add Person</Text>
-            
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Add Person</Text>
+              <TouchableOpacity style={[styles.modalCloseBtn, { backgroundColor: theme.surfaceVariant }]} onPress={() => { setModalVisible(false); setNewPersonName(''); }}>
+                <Ionicons name="close" size={20} color={theme.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            <View style={[styles.modalDivider, { backgroundColor: theme.outlineVariant }]} />
+
             <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Name</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.outline, color: theme.textPrimary, backgroundColor: theme.surfaceVariant }]}
+              style={[styles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
               placeholder="e.g., John"
               placeholderTextColor={theme.textSecondary}
               value={newPersonName}
               onChangeText={setNewPersonName}
               autoFocus
             />
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.surfaceVariant }]}
-                onPress={() => {
-                  setModalVisible(false);
-                  setNewPersonName('');
-                }}
-              >
-                <Text style={[styles.cancelButtonText, { color: ACCENT }]}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.createButton, { backgroundColor: ACCENT }]}
-                onPress={addPerson}
-              >
-                <Text style={[styles.createButtonText, { color: theme.onPrimary }]}>Add</Text>
-              </TouchableOpacity>
-            </View>
+
+            <TouchableOpacity
+              style={[styles.modalConfirmBtn, { backgroundColor: ACCENT }]}
+              onPress={addPerson}
+            >
+              <Text style={[styles.modalConfirmText, { color: theme.onPrimary }]}>Add</Text>
+            </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
       </Modal>
 
       {/* Edit Person Modal */}
       <Modal
-        animationType="slide"
+        animationType="fade"
         transparent={true}
         visible={editingPerson !== null}
         onRequestClose={() => {
@@ -667,35 +663,30 @@ export default function PeopleTab({ route }) {
         <KeyboardAvoidingView style={styles.modalContainer} behavior="padding" keyboardVerticalOffset={0}>
           <Pressable style={StyleSheet.absoluteFillObject} onPress={() => { setEditingPerson(null); setEditPersonName(''); }} />
           <View style={[styles.modalContent, { backgroundColor: theme.surface, shadowColor: theme.shadow }]} onStartShouldSetResponder={() => true}>
-            <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Edit Person</Text>
-            
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.textPrimary }]}>Edit Person</Text>
+              <TouchableOpacity style={[styles.modalCloseBtn, { backgroundColor: theme.surfaceVariant }]} onPress={() => { setEditingPerson(null); setEditPersonName(''); }}>
+                <Ionicons name="close" size={20} color={theme.textSecondary} />
+              </TouchableOpacity>
+            </View>
+            <View style={[styles.modalDivider, { backgroundColor: theme.outlineVariant }]} />
+
             <Text style={[styles.inputLabel, { color: theme.textSecondary }]}>Name</Text>
             <TextInput
-              style={[styles.input, { borderColor: theme.outline, color: theme.textPrimary, backgroundColor: theme.surfaceVariant }]}
+              style={[styles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
               placeholder="e.g., John"
               placeholderTextColor={theme.textSecondary}
               value={editPersonName}
               onChangeText={setEditPersonName}
               autoFocus
             />
-            
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.cancelButton, { backgroundColor: theme.surfaceVariant }]}
-                onPress={() => {
-                  setEditingPerson(null);
-                  setEditPersonName('');
-                }}
-              >
-                <Text style={[styles.cancelButtonText, { color: ACCENT }]}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.createButton, { backgroundColor: ACCENT }]}
-                onPress={saveEditPerson}
-              >
-                <Text style={[styles.createButtonText, { color: theme.onPrimary }]}>Save</Text>
-              </TouchableOpacity>
-            </View>
+
+            <TouchableOpacity
+              style={[styles.modalConfirmBtn, { backgroundColor: ACCENT }]}
+              onPress={saveEditPerson}
+            >
+              <Text style={[styles.modalConfirmText, { color: theme.onPrimary }]}>Save</Text>
+            </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
       </Modal>
@@ -828,15 +819,6 @@ const styles = StyleSheet.create({
   },
   peopleInputContainer: {
     marginBottom: 24,
-  },
-  inputLabel: {
-    fontFamily: 'Ysabeau-Bold',
-    fontSize: 13,
-    fontWeight: '700',
-    marginBottom: 10,
-    marginTop: 4,
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
   },
   inputRow: {
     flexDirection: 'row',
@@ -1115,56 +1097,67 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
   },
   modalContent: {
     width: '88%',
-    borderRadius: 24,
-    padding: 24,
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.2,
-    shadowRadius: 20,
-    elevation: 12,
+    borderRadius: 32,
+    padding: 28,
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.18,
+    shadowRadius: 28,
+    elevation: 16,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
   },
   modalTitle: {
     fontFamily: 'Ysabeau-Bold',
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: '700',
-    marginBottom: 20,
     letterSpacing: -0.3,
+  },
+  modalDivider: {
+    height: 1,
+    marginBottom: 24,
+  },
+  modalCloseBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inputLabel: {
+    fontFamily: 'Ysabeau-Bold',
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+    marginBottom: 8,
+    marginTop: 16,
   },
   input: {
     fontFamily: 'Ysabeau-Regular',
-    borderWidth: 2,
     borderRadius: 14,
     padding: 16,
     fontSize: 16,
-    marginBottom: 24,
+    marginBottom: 4,
   },
-  modalButtons: {
-    flexDirection: 'row',
-    gap: 16,
-    marginTop: 4,
-  },
-  modalButton: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 20,
+  modalConfirmBtn: {
+    borderRadius: 30,
+    paddingVertical: 18,
     alignItems: 'center',
+    marginTop: 8,
   },
-  cancelButton: {},
-  cancelButtonText: {
+  modalConfirmText: {
     fontFamily: 'Ysabeau-SemiBold',
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
-    letterSpacing: 0.5,
-  },
-  createButton: {},
-  createButtonText: {
-    fontFamily: 'Ysabeau-SemiBold',
-    fontSize: 16,
-    fontWeight: '600',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
   itemModalContainer: {
     flex: 1,
