@@ -431,14 +431,13 @@ const styles = StyleSheet.create({
   logoContainer: {
     width: 44,
     height: 44,
-    borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
   },
   logoImage: {
-    width: 36,
-    height: 36,
+    width: 44,
+    height: 44,
   },
   searchBar: {
     flex: 1,

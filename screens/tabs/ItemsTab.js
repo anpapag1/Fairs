@@ -8,6 +8,7 @@ import {
   TextInput,
   Modal,
   Animated,
+  Easing,
   KeyboardAvoidingView,
   Pressable,
   ActivityIndicator,
@@ -99,54 +100,45 @@ function parseBillText(text) {
 }
 
 // Defined outside component for perf — no closures over component state
-function ReviewItemRow({ item, accent, theme, onToggle, onNameChange, onPriceChange, onDelete }) {
+function ReviewItemRow({ item, accent, theme, onToggle, onNameChange, onPriceChange, onDelete, currencySymbol }) {
   return (
-    <View style={[styles.reviewRow, { backgroundColor: theme.surface }]}>
+    <View style={[styles.reviewRow, { backgroundColor: theme.surface, opacity: item.selected ? 1 : 0.42 }]}>
       <TouchableOpacity
-        style={[
-          styles.reviewCheckbox,
-          {
-            borderColor: accent,
-            backgroundColor: item.selected ? accent : 'transparent',
-          },
-        ]}
+        style={[styles.reviewCheckbox, { borderColor: accent, backgroundColor: item.selected ? accent : 'transparent' }]}
         onPress={() => onToggle(item.id)}
         activeOpacity={0.7}
       >
         {item.selected && (
-          <Ionicons name="checkmark" size={13} color={theme.onPrimary} />
+          <Ionicons name="checkmark" size={14} color={theme.onPrimary} />
         )}
       </TouchableOpacity>
 
       <TextInput
-        style={[
-          styles.reviewNameInput,
-          { borderColor: theme.outline, color: theme.textPrimary },
-        ]}
+        style={[styles.reviewNameInput, { color: theme.textPrimary }]}
         value={item.name}
         onChangeText={(v) => onNameChange(item.id, v)}
         placeholderTextColor={theme.textSecondary}
         placeholder="Item name"
       />
 
-      <TextInput
-        style={[
-          styles.reviewPriceInput,
-          { borderColor: theme.outline, color: theme.textPrimary },
-        ]}
-        value={item.price}
-        onChangeText={(v) => onPriceChange(item.id, v)}
-        keyboardType="decimal-pad"
-        placeholderTextColor={theme.textSecondary}
-        placeholder="0.00"
-      />
+      <View style={[styles.reviewPriceContainer, { backgroundColor: theme.background }]}>
+        <Text style={[styles.reviewCurrencyLabel, { color: theme.textSecondary }]}>{currencySymbol}</Text>
+        <TextInput
+          style={[styles.reviewPriceInput, { color: theme.textPrimary }]}
+          value={item.price}
+          onChangeText={(v) => onPriceChange(item.id, v)}
+          keyboardType="decimal-pad"
+          placeholderTextColor={theme.textSecondary}
+          placeholder="0.00"
+        />
+      </View>
 
       <TouchableOpacity
-        style={styles.reviewDeleteBtn}
+        style={[styles.reviewDeleteBtn, { backgroundColor: '#FFDAD6' }]}
         onPress={() => onDelete(item.id)}
         activeOpacity={0.7}
       >
-        <Ionicons name="trash-outline" size={18} color="#BA1A1A" />
+        <Ionicons name="trash-outline" size={16} color="#BA1A1A" />
       </TouchableOpacity>
     </View>
   );
@@ -179,6 +171,14 @@ export default function ItemsTab({ route }) {
   
   // Store refs for all swipeable items
   const swipeableRefs = useRef({});
+  const fabAnim = useRef(new Animated.Value(0)).current;
+  const [fabOpen, setFabOpen] = useState(false);
+  const fabAnimating = useRef(false);
+
+  // Tip modal
+  const [tipModalVisible, setTipModalVisible] = useState(false);
+  const [tipInputValue, setTipInputValue] = useState('');
+  const [tipInputMode, setTipInputMode] = useState('money');
 
   // Update items in context whenever local items change
   useEffect(() => {
@@ -258,6 +258,46 @@ export default function ItemsTab({ route }) {
       console.error('[BillScan] Error:', e);
       Alert.alert('Error', e?.message || String(e));
     }
+  };
+
+  const openTipModal = () => {
+    setTipInputValue(tipValue);
+    setTipInputMode(tipMode);
+    setTipModalVisible(true);
+  };
+
+  const saveTip = () => {
+    setTipValue(tipInputValue);
+    setTipMode(tipInputMode);
+    setTipModalVisible(false);
+  };
+
+  const closeFabThen = (action) => {
+    fabAnim.stopAnimation();
+    fabAnimating.current = true;
+    setFabOpen(false);
+    Animated.timing(fabAnim, {
+      toValue: 0,
+      duration: 180,
+      easing: Easing.in(Easing.quad),
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      fabAnimating.current = false;
+      if (finished) action();
+    });
+  };
+
+  const toggleFab = () => {
+    fabAnim.stopAnimation();
+    const opening = !fabOpen;
+    fabAnimating.current = true;
+    setFabOpen(opening);
+    Animated.timing(fabAnim, {
+      toValue: opening ? 1 : 0,
+      duration: opening ? 120 : 180,
+      easing: opening ? Easing.out(Easing.quad) : Easing.in(Easing.quad),
+      useNativeDriver: true,
+    }).start(() => { fabAnimating.current = false; });
   };
 
   const addItem = () => {
@@ -459,57 +499,116 @@ export default function ItemsTab({ route }) {
       keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 80}
     >
       <>
-        <View style={[styles.listHeader, { backgroundColor: theme.primaryContainer }]}>
-          <Text style={[styles.headerNumber, { color: A }]}>#</Text>
-          <Text style={[styles.headerItem, { color: A }]}>Item</Text>
-          <Text style={[styles.headerPrice, { color: A }]}>Price</Text>
-        </View>
-        
-        <FlatList
-          data={items}
-          renderItem={renderItem}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={styles.listContainer}
-          ListFooterComponent={
-            <View style={styles.footerRow}>
+        <View style={{ flex: 1 }}>
+          <View style={[styles.listHeader, { backgroundColor: theme.primaryContainer }]}>
+            <Text style={[styles.headerNumber, { color: A }]}>#</Text>
+            <Text style={[styles.headerItem, { color: A }]}>Item</Text>
+            <Text style={[styles.headerPrice, { color: A }]}>Price</Text>
+          </View>
+
+          <FlatList
+            data={items}
+            renderItem={renderItem}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={styles.listContainer}
+            ListFooterComponent={() =>
+              tipValue && parseFloat(tipValue) > 0 ? (
+                <TouchableOpacity
+                  style={[styles.tipRow, { backgroundColor: theme.surface }]}
+                  onPress={openTipModal}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.tipRowLeft}>
+                    <Ionicons name="cash-outline" size={15} color={theme.textSecondary} />
+                    <Text style={[styles.tipRowLabel, { color: theme.textSecondary }]}>
+                      {tipMode === 'percent' ? `Tip (${tipValue}%)` : 'Tip'}
+                    </Text>
+                  </View>
+                  <Text style={[styles.tipRowAmount, { color: theme.textSecondary }]}>
+                    {currencySymbol}{calculateTip().toFixed(2)}
+                  </Text>
+                </TouchableOpacity>
+              ) : null
+            }
+          />
+
+          {/* FAB backdrop */}
+          {fabOpen && (
+            <Pressable
+              style={[StyleSheet.absoluteFillObject, styles.fabBackdrop]}
+              onPress={toggleFab}
+            />
+          )}
+
+          {/* Floating Action Button */}
+          <View style={styles.fabContainer} pointerEvents="box-none">
+            {/* Mini FAB: Scan Bill */}
+            <Animated.View
+              pointerEvents={fabOpen || fabAnimating.current ? 'auto' : 'none'}
+              style={[styles.miniFabItem, {
+                opacity: fabAnim,
+                transform: [{ translateY: fabAnim.interpolate({ inputRange: [0, 1], outputRange: [0, -132] }) }],
+              }]}
+            >
               <TouchableOpacity
-                style={[styles.addItemButton, { borderColor: A, backgroundColor: theme.surface }]}
-                onPress={() => setModalVisible(true)}
+                style={[styles.miniFabOption, { backgroundColor: theme.accent }]}
+                onPress={() => closeFabThen(() => setScanSheetVisible(true))}
+                activeOpacity={0.8}
               >
-                <Text style={[styles.addItemButtonText, { color: A }]}>+ Add Item</Text>
+                <Text style={[styles.miniFabLabel, { color: theme.textPrimary }]}>Scan Bill</Text>
+                <Ionicons name="receipt-outline" size={20} color={theme.textPrimary} />
               </TouchableOpacity>
+            </Animated.View>
+
+            {/* Mini FAB: Tip */}
+            <Animated.View
+              pointerEvents={fabOpen || fabAnimating.current ? 'auto' : 'none'}
+              style={[styles.miniFabItem, {
+                opacity: fabAnim,
+                transform: [{ translateY: fabAnim.interpolate({ inputRange: [0, 1], outputRange: [0, -68] }) }],
+              }]}
+            >
               <TouchableOpacity
-                style={[styles.scanButton, { borderColor: A, backgroundColor: theme.surface }]}
-                onPress={() => setScanSheetVisible(true)}
+                style={[styles.miniFabOption, { backgroundColor: theme.accent }]}
+                onPress={() => closeFabThen(() => openTipModal())}
+                activeOpacity={0.8}
               >
-                <Ionicons name="receipt-outline" size={22} color={A} />
+                <Text style={[styles.miniFabLabel, { color: theme.textPrimary }]}>Tip</Text>
+                <Ionicons name="cash-outline" size={20} color={theme.textPrimary} />
+              </TouchableOpacity>
+            </Animated.View>
+
+            {/* Split pill FAB */}
+            <View style={[styles.fabPill, { backgroundColor: theme.main }]}>
+              {/* Primary: Add Item — direct tap */}
+              <TouchableOpacity
+                style={styles.fabPillMain}
+                onPress={() => setModalVisible(true)}
+                activeOpacity={0.85}
+              >
+                <Ionicons name="add" size={28} color="#fff" />
+              </TouchableOpacity>
+
+              {/* Divider */}
+              <View style={styles.fabPillDivider} />
+
+              {/* Secondary: expand chevron */}
+              <TouchableOpacity
+                style={styles.fabPillChevron}
+                onPress={toggleFab}
+                activeOpacity={0.85}
+              >
+                <Animated.View style={{
+                  transform: [{ rotate: fabAnim.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '180deg'] }) }],
+                }}>
+                  <Ionicons name="chevron-up" size={18} color="rgba(255,255,255,0.85)" />
+                </Animated.View>
               </TouchableOpacity>
             </View>
-          }
-        />
+          </View>
+        </View>
 
         <View style={[styles.totalsContainer, { backgroundColor: theme.surface, borderTopColor: theme.outlineVariant, shadowColor: theme.shadow }]}>
-          <View style={styles.tipContainer}>
-            <Text style={[styles.tipLabel, { color: theme.textPrimary }]}>Tip:</Text>
-            <TextInput
-              style={[styles.tipInput, { borderColor: theme.outline, backgroundColor: theme.surface, color: theme.textPrimary }]}
-              placeholder="0"
-              placeholderTextColor={theme.textSecondary}
-              keyboardType="decimal-pad"
-              value={tipValue}
-              onChangeText={setTipValue}
-            />
-            <TouchableOpacity 
-              style={[styles.tipModeButton, { borderColor: theme.outline, backgroundColor: theme.surface }]}
-              onPress={() => setTipMode(tipMode === 'percent' ? 'money' : 'percent')}
-            >
-              <Text style={[styles.tipModeText, { color: A }]}>
-                {tipMode === 'percent' ? '%' : currencySymbol}
-              </Text>
-            </TouchableOpacity>
-            <Text style={[styles.tipAmount, { color: theme.textPrimary }]}>{currencySymbol}{calculateTip().toFixed(2)}</Text>
-          </View>
-          
           <View style={styles.totalRow}>
             <Text style={[styles.totalLabel, { color: theme.textPrimary }]}>Total:</Text>
             <Text style={[styles.totalAmount, { color: A }]}>{currencySymbol}{calculateTotal().toFixed(2)}</Text>
@@ -588,6 +687,36 @@ export default function ItemsTab({ route }) {
         />
       </AppModal>
 
+      {/* Tip Modal */}
+      <AppModal
+        visible={tipModalVisible}
+        onClose={() => setTipModalVisible(false)}
+        title="Tip"
+        confirmLabel="Save"
+        onConfirm={saveTip}
+      >
+        <Text style={[fieldStyles.inputLabel, { color: theme.textSecondary }]}>Amount</Text>
+        <View style={styles.tipModalRow}>
+          <TextInput
+            style={[fieldStyles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary, flex: 1 }]}
+            placeholder="0"
+            placeholderTextColor={theme.textSecondary}
+            keyboardType="decimal-pad"
+            value={tipInputValue}
+            onChangeText={setTipInputValue}
+            autoFocus
+          />
+          <TouchableOpacity
+            style={[styles.tipModeButton, { borderColor: theme.outline, backgroundColor: theme.surfaceVariant }]}
+            onPress={() => setTipInputMode(m => m === 'percent' ? 'money' : 'percent')}
+          >
+            <Text style={[styles.tipModeText, { color: A }]}>
+              {tipInputMode === 'percent' ? '%' : currencySymbol}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </AppModal>
+
       {/* Multiplier Modal */}
       <AppModal
         visible={multiplierModalVisible}
@@ -651,26 +780,49 @@ export default function ItemsTab({ route }) {
           style={styles.sheetOverlay}
           onPress={() => setScanSheetVisible(false)}
         />
-        <View style={[styles.sheetContainer, { backgroundColor: theme.surface }]}>
+        <View style={[styles.sheetContainer, { backgroundColor: theme.background }]}>
           <View style={[styles.sheetHandle, { backgroundColor: theme.outline }]} />
           <Text style={[styles.sheetTitle, { color: theme.textPrimary }]}>Scan Bill</Text>
+          <Text style={[styles.sheetSubtitle, { color: theme.textSecondary }]}>Import a photo of your bill to auto-detect items</Text>
+
+          <View style={styles.sheetOptions}>
+            <TouchableOpacity
+              style={[styles.sheetOptionCard, { backgroundColor: theme.surface }]}
+              onPress={() => { setScanSheetVisible(false); handlePickImage('camera'); }}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.sheetOptionIcon, { backgroundColor: theme.primaryContainer }]}>
+                <Ionicons name="camera-outline" size={26} color={A} />
+              </View>
+              <View style={styles.sheetOptionText}>
+                <Text style={[styles.sheetOptionTitle, { color: theme.textPrimary }]}>Take Photo</Text>
+                <Text style={[styles.sheetOptionDesc, { color: theme.textSecondary }]}>Use your camera to photograph the bill</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.sheetOptionCard, { backgroundColor: theme.surface }]}
+              onPress={() => { setScanSheetVisible(false); handlePickImage('library'); }}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.sheetOptionIcon, { backgroundColor: theme.primaryContainer }]}>
+                <Ionicons name="images-outline" size={26} color={A} />
+              </View>
+              <View style={styles.sheetOptionText}>
+                <Text style={[styles.sheetOptionTitle, { color: theme.textPrimary }]}>Choose from Library</Text>
+                <Text style={[styles.sheetOptionDesc, { color: theme.textSecondary }]}>Pick an existing photo from your gallery</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />
+            </TouchableOpacity>
+          </View>
 
           <TouchableOpacity
-            style={[styles.sheetOption, { borderBottomColor: theme.outlineVariant }]}
-            onPress={() => { setScanSheetVisible(false); handlePickImage('camera'); }}
+            style={[styles.sheetCancelButton, { backgroundColor: theme.surface }]}
+            onPress={() => setScanSheetVisible(false)}
             activeOpacity={0.7}
           >
-            <Ionicons name="camera-outline" size={24} color={A} />
-            <Text style={[styles.sheetOptionText, { color: theme.textPrimary }]}>Take Photo</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.sheetOption}
-            onPress={() => { setScanSheetVisible(false); handlePickImage('library'); }}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="images-outline" size={24} color={A} />
-            <Text style={[styles.sheetOptionText, { color: theme.textPrimary }]}>Choose from Library</Text>
+            <Text style={[styles.sheetCancelText, { color: theme.textPrimary }]}>Cancel</Text>
           </TouchableOpacity>
         </View>
       </Modal>
@@ -692,7 +844,7 @@ export default function ItemsTab({ route }) {
           <View style={[styles.reviewHeader, { borderBottomColor: theme.outlineVariant }]}>
             <Text style={[styles.reviewTitle, { color: theme.textPrimary }]}>Review Scanned Items</Text>
             <Text style={[styles.reviewSubtitle, { color: theme.textSecondary }]}>
-              Deselect or edit items before adding them
+              {scannedItems.filter(i => i.selected).length} of {scannedItems.length} item{scannedItems.length !== 1 ? 's' : ''} selected
             </Text>
           </View>
 
@@ -705,6 +857,7 @@ export default function ItemsTab({ route }) {
                 item={item}
                 accent={A}
                 theme={theme}
+                currencySymbol={currencySymbol}
                 onToggle={(id) =>
                   setScannedItems(prev =>
                     prev.map(i => i.id === id ? { ...i, selected: !i.selected } : i)
@@ -726,6 +879,13 @@ export default function ItemsTab({ route }) {
               />
             )}
             contentContainerStyle={{ paddingVertical: 8 }}
+            ListEmptyComponent={
+              <View style={styles.reviewEmptyState}>
+                <Ionicons name="scan-outline" size={52} color={theme.textSecondary} style={{ opacity: 0.45 }} />
+                <Text style={[styles.reviewEmptyTitle, { color: theme.textPrimary }]}>No items detected</Text>
+                <Text style={[styles.reviewEmptyDesc, { color: theme.textSecondary }]}>Try a clearer photo of the bill</Text>
+              </View>
+            }
           />
 
           {/* Footer */}
@@ -741,7 +901,7 @@ export default function ItemsTab({ route }) {
               onPress={addScannedItems}
             >
               <Text style={[styles.reviewFooterBtnText, { color: theme.onPrimary }]}>
-                Add Selected ({scannedItems.filter(i => i.selected).length})
+                Add {scannedItems.filter(i => i.selected).length} Item{scannedItems.filter(i => i.selected).length !== 1 ? 's' : ''}
               </Text>
             </TouchableOpacity>
           </View>
@@ -812,7 +972,7 @@ const styles = StyleSheet.create({
     width: 40,
   },
   listContainer: {
-    paddingBottom: 20,
+    paddingBottom: 90,
   },
   itemRow: {
     flexDirection: 'row',
@@ -875,30 +1035,34 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  tipContainer: {
+  tipRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    margin: 4,
+    marginLeft: 8,
+    marginRight: 8,
+    borderRadius: 16,
   },
-  tipLabel: {
-    fontFamily: 'Ysabeau-SemiBold',
-    fontSize: 16,
-    fontWeight: '600',
-    marginRight: 12,
-    color: '#1C1B1F',
-    letterSpacing: 0.15,
+  tipRowLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
-  tipInput: {
+  tipRowLabel: {
     fontFamily: 'Ysabeau-Regular',
-    borderWidth: 1,
-    borderColor: '#79747E',
-    borderRadius: 12,
-    padding: 12,
-    width: 70,
-    fontSize: 16,
-    textAlign: 'center',
-    backgroundColor: '#FFFFFF',
-    color: '#1C1B1F',
+    fontSize: 15,
+  },
+  tipRowAmount: {
+    fontFamily: 'Ysabeau-SemiBold',
+    fontSize: 15,
+  },
+  tipModalRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
   tipModeButton: {
     borderWidth: 1,
@@ -1094,10 +1258,10 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     paddingBottom: 34,
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 12,
     elevation: 10,
   },
@@ -1106,24 +1270,58 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     alignSelf: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   sheetTitle: {
     fontFamily: 'Ysabeau-Bold',
-    fontSize: 17,
+    fontSize: 20,
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  sheetSubtitle: {
+    fontFamily: 'Ysabeau-Regular',
+    fontSize: 13,
     textAlign: 'center',
     marginBottom: 20,
   },
-  sheetOption: {
+  sheetOptions: {
+    gap: 10,
+    marginBottom: 12,
+  },
+  sheetOptionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
-    gap: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: 'transparent',
+    gap: 14,
+    padding: 16,
+    borderRadius: 18,
+  },
+  sheetOptionIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   sheetOptionText: {
+    flex: 1,
+  },
+  sheetOptionTitle: {
+    fontFamily: 'Ysabeau-SemiBold',
+    fontSize: 16,
+    marginBottom: 2,
+  },
+  sheetOptionDesc: {
     fontFamily: 'Ysabeau-Regular',
+    fontSize: 12,
+  },
+  sheetCancelButton: {
+    marginTop: 4,
+    paddingVertical: 16,
+    borderRadius: 18,
+    alignItems: 'center',
+  },
+  sheetCancelText: {
+    fontFamily: 'Ysabeau-SemiBold',
     fontSize: 16,
   },
   // --- Review Modal ---
@@ -1165,44 +1363,73 @@ const styles = StyleSheet.create({
   reviewRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
-    marginHorizontal: 8,
-    marginVertical: 4,
-    borderRadius: 14,
-    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    marginHorizontal: 12,
+    marginVertical: 5,
+    borderRadius: 16,
+    gap: 10,
   },
   reviewCheckbox: {
     width: 26,
     height: 26,
-    borderRadius: 7,
+    borderRadius: 8,
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
   },
   reviewNameInput: {
     flex: 1,
-    fontFamily: 'Ysabeau-Regular',
-    fontSize: 15,
-    borderWidth: 1,
+    fontFamily: 'Ysabeau-SemiBold',
+    fontSize: 16,
+    paddingVertical: 0,
+    paddingHorizontal: 0,
+  },
+  reviewPriceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 9,
+    paddingVertical: 7,
+    gap: 1,
+    flexShrink: 0,
+  },
+  reviewCurrencyLabel: {
+    fontFamily: 'Ysabeau-Regular',
+    fontSize: 14,
   },
   reviewPriceInput: {
-    width: 72,
+    width: 58,
     fontFamily: 'Ysabeau-Regular',
-    fontSize: 15,
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    fontSize: 14,
     textAlign: 'right',
+    paddingVertical: 0,
+    paddingHorizontal: 0,
   },
   reviewDeleteBtn: {
-    width: 36,
-    height: 36,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
+    flexShrink: 0,
+  },
+  reviewEmptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    gap: 8,
+  },
+  reviewEmptyTitle: {
+    fontFamily: 'Ysabeau-SemiBold',
+    fontSize: 17,
+    marginTop: 6,
+  },
+  reviewEmptyDesc: {
+    fontFamily: 'Ysabeau-Regular',
+    fontSize: 14,
   },
   priceRowLabels: {
     flexDirection: 'row',
@@ -1213,5 +1440,82 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  // --- FAB ---
+  fabContainer: {
+    position: 'absolute',
+    right: 16,
+    bottom: 16,
+    alignItems: 'flex-end',
+    zIndex: 20,
+    elevation: 20,
+  },
+  fabPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 30,
+    height: 56,
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    overflow: 'hidden',
+  },
+  fabPillMain: {
+    paddingHorizontal: 20,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fabPillDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: 'rgba(255,255,255,0.35)',
+  },
+  fabPillChevron: {
+    paddingHorizontal: 14,
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  fab: {
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+  },
+  miniFabItem: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+  },
+  miniFabOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 12,
+    paddingLeft: 18,
+    paddingRight: 16,
+    borderRadius: 30,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+  },
+  miniFabLabel: {
+    fontFamily: 'Ysabeau-SemiBold',
+    fontSize: 14,
+  },
+  fabBackdrop: {
+    zIndex: 10,
+    elevation: 10,
   },
 });
