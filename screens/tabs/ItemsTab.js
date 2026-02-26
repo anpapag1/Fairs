@@ -163,6 +163,7 @@ export default function ItemsTab({ route }) {
   const [modalVisible, setModalVisible] = useState(false);
   const [newItemName, setNewItemName] = useState('');
   const [newItemPrice, setNewItemPrice] = useState('');
+  const [newItemMultiplier, setNewItemMultiplier] = useState('1');
   const [editingItem, setEditingItem] = useState(null);
   const [editItemName, setEditItemName] = useState('');
   const [editItemPrice, setEditItemPrice] = useState('');
@@ -261,14 +262,17 @@ export default function ItemsTab({ route }) {
 
   const addItem = () => {
     if (newItemName.trim() && newItemPrice.trim() && !isNaN(parseFloat(newItemPrice))) {
+      const multiplier = parseInt(newItemMultiplier) > 0 ? parseInt(newItemMultiplier) : 1;
       const newItem = {
         id: Date.now().toString(),
         name: newItemName.trim(),
         price: parseFloat(newItemPrice).toFixed(2),
+        ...(multiplier > 1 ? { multiplier } : {}),
       };
       setItems([...items, newItem]);
       setNewItemName('');
       setNewItemPrice('');
+      setNewItemMultiplier('1');
       setModalVisible(false);
     }
   };
@@ -516,7 +520,7 @@ export default function ItemsTab({ route }) {
 
       <AppModal
         visible={modalVisible}
-        onClose={() => { setModalVisible(false); setNewItemName(''); setNewItemPrice(''); }}
+        onClose={() => { setModalVisible(false); setNewItemName(''); setNewItemPrice(''); setNewItemMultiplier('1'); }}
         title="Add Item"
         confirmLabel="Add"
         onConfirm={addItem}
@@ -531,15 +535,28 @@ export default function ItemsTab({ route }) {
           autoFocus
         />
 
-        <Text style={[fieldStyles.inputLabel, { color: theme.textSecondary }]}>Price</Text>
-        <TextInput
-          style={[fieldStyles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary }]}
-          placeholder="0.00"
-          placeholderTextColor={theme.textSecondary}
-          keyboardType="decimal-pad"
-          value={newItemPrice}
-          onChangeText={setNewItemPrice}
-        />
+        <View style={styles.priceRowLabels}>
+          <Text style={[fieldStyles.inputLabel, { color: theme.textSecondary, flex: 1 }]}>Price</Text>
+          <Text style={[fieldStyles.inputLabel, { color: theme.textSecondary, width: 80 }]}>Qty</Text>
+        </View>
+        <View style={styles.priceRow}>
+          <TextInput
+            style={[fieldStyles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary, flex: 1 }]}
+            placeholder="0.00"
+            placeholderTextColor={theme.textSecondary}
+            keyboardType="decimal-pad"
+            value={newItemPrice}
+            onChangeText={setNewItemPrice}
+          />
+          <TextInput
+            style={[fieldStyles.input, { backgroundColor: theme.surfaceVariant, color: theme.textPrimary, width: 80, textAlign: 'center' }]}
+            placeholder="1"
+            placeholderTextColor={theme.textSecondary}
+            keyboardType="number-pad"
+            value={newItemMultiplier}
+            onChangeText={(v) => setNewItemMultiplier(v.replace(/[^0-9]/g, ''))}
+          />
+        </View>
       </AppModal>
 
       {/* Edit Item Modal */}
@@ -1186,5 +1203,15 @@ const styles = StyleSheet.create({
     height: 36,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  priceRowLabels: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
   },
 });

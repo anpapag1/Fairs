@@ -11,7 +11,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Picker } from '@react-native-picker/picker';
 import { Ionicons } from '@expo/vector-icons';
 import * as FileSystem from 'expo-file-system/legacy';
@@ -27,6 +27,7 @@ export default function SettingsScreen({ navigation }) {
   const { currencyCode, setCurrencyCode, currencies } = useCurrency();
   const { theme, themeMode, setThemeMode } = useTheme();
   const { groups, importGroups } = useGroups();
+  const insets = useSafeAreaInsets();
 
   // ── Import state ─────────────────────────────────────────
   const [importModalVisible, setImportModalVisible] = useState(false);
@@ -110,7 +111,7 @@ export default function SettingsScreen({ navigation }) {
       <StatusBar backgroundColor={MAIN} barStyle="light-content" />
 
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
@@ -288,7 +289,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: MAIN,
     paddingHorizontal: 12,
-    paddingTop: 30,
+
     paddingBottom: 14,
     gap: 8,
   },

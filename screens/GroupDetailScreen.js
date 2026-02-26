@@ -112,7 +112,7 @@ export default function GroupDetailScreen({ route, navigation }) {
       <StatusBar backgroundColor={MAIN} barStyle="light-content" />
 
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: MAIN,
     paddingHorizontal: 12,
-    paddingTop: 30,
+
     paddingBottom: 14,
     gap: 8,
   },

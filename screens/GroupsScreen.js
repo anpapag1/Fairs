@@ -12,7 +12,7 @@ import {
   StatusBar,
   Pressable,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Swipeable } from 'react-native-gesture-handler';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'react-native';
@@ -57,6 +57,7 @@ export default function GroupsScreen({ navigation }) {
   const [activeFilter, setActiveFilter] = useState('all');
   const [sortOrder, setSortOrder] = useState('date-desc');
   const [sortMenuVisible, setSortMenuVisible] = useState(false);
+  const insets = useSafeAreaInsets();
 
   const SORT_OPTIONS = [
     { id: 'date-desc', label: 'Newest first',  icon: 'arrow-down',  iconLib: 'Ionicons' },
@@ -228,7 +229,7 @@ export default function GroupsScreen({ navigation }) {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['bottom']}>
       <StatusBar backgroundColor={MAIN} barStyle="light-content" />
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <View style={styles.logoContainer}>
           <Image source={require('../assets/Logo.png')} style={styles.logoImage} resizeMode="contain" />
         </View>
@@ -422,7 +423,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 30,
     paddingBottom: 14,
     gap: 10,
     backgroundColor: MAIN,
