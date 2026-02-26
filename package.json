@@ -49,6 +49,7 @@
   "devDependencies": {
     "babel-preset-expo": "~54.0.10",
     "baseline-browser-mapping": "^2.10.0",
-    "cursor-talk-to-figma-mcp": "^0.3.0"
+    "cursor-talk-to-figma-mcp": "^0.3.0",
+    "sharp": "^0.34.5"
   }
 }
