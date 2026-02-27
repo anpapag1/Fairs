@@ -25,14 +25,19 @@ import AppModal, { fieldStyles } from '../components/AppModal';
 // Icon mapping for group types
 const ICON_OPTIONS = [
   { id: 'beer', name: 'beer', library: 'Ionicons' },
-  { id: 'cookie', name: 'cookie', library: 'MaterialCommunityIcons' },
-  { id: 'pizza', name: 'pizza', library: 'Ionicons' },
-  { id: 'fast-food', name: 'fast-food', library: 'Ionicons' },
+  { id: 'bottle-wine', name: 'bottle-wine', library: 'MaterialCommunityIcons' },
+  { id: 'wine', name: 'wine', library: 'Ionicons' },
   { id: 'cafe', name: 'cafe', library: 'Ionicons' },
   { id: 'party-popper', name: 'party-popper', library: 'MaterialCommunityIcons' },
-  { id: 'airplane', name: 'airplane', library: 'Ionicons' },
-  { id: 'home', name: 'home', library: 'Ionicons' },
+  { id: 'restaurant', name: 'restaurant', library: 'Ionicons' },
+  { id: 'pizza', name: 'pizza', library: 'Ionicons' },
+  { id: 'food-drumstick', name: 'food-drumstick', library: 'MaterialCommunityIcons' },
   { id: 'game-controller', name: 'game-controller', library: 'Ionicons' },
+  { id: 'gift', name: 'gift', library: 'Ionicons' },
+  { id: 'home', name: 'home', library: 'Ionicons' },
+  { id: 'car', name: 'car', library: 'Ionicons' },
+  { id: 'airplane', name: 'airplane', library: 'Ionicons' },
+  { id: 'film', name: 'film', library: 'Ionicons' },
   { id: 'cash', name: 'cash', library: 'Ionicons' },
 ];
 
@@ -348,14 +353,13 @@ export default function GroupsScreen({ navigation }) {
               style={[
                 styles.emojiOption,
                 {
-                  borderColor: theme.outline,
-                  backgroundColor: newGroupEmoji === icon.id ? theme.primaryContainer : theme.surfaceContainerHigh,
+                  borderColor: newGroupEmoji === icon.id ? theme.primary : 'transparent',
+                  backgroundColor: newGroupEmoji === icon.id ? theme.primaryContainer : theme.surfaceVariant,
                 },
-                newGroupEmoji === icon.id && { borderColor: theme.primary },
               ]}
               onPress={() => setNewGroupEmoji(icon.id)}
             >
-              <GroupIcon iconId={icon.id} size={28} color={newGroupEmoji === icon.id ? theme.primary : theme.textSecondary} />
+              <GroupIcon iconId={icon.id} size={26} color={newGroupEmoji === icon.id ? theme.primary : theme.textSecondary} />
             </TouchableOpacity>
           ))}
         </View>
@@ -387,14 +391,13 @@ export default function GroupsScreen({ navigation }) {
               style={[
                 styles.emojiOption,
                 {
-                  borderColor: theme.outline,
+                  borderColor: editGroupEmoji === icon.id ? theme.primary : 'transparent',
                   backgroundColor: editGroupEmoji === icon.id ? theme.primaryContainer : theme.surfaceContainerHigh,
                 },
-                editGroupEmoji === icon.id && { borderColor: theme.primary },
               ]}
               onPress={() => setEditGroupEmoji(icon.id)}
             >
-              <GroupIcon iconId={icon.id} size={28} color={editGroupEmoji === icon.id ? theme.primary : theme.textSecondary} />
+              <GroupIcon iconId={icon.id} size={26} color={editGroupEmoji === icon.id ? theme.primary : theme.textSecondary} />
             </TouchableOpacity>
           ))}
         </View>
@@ -706,11 +709,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 8,
-    marginBottom: 16,
   },
   emojiOption: {
-    width: 52,
-    height: 52,
+    width: 45,
+    height: 45,
     borderRadius: 14,
     borderWidth: 2,
     justifyContent: 'center',

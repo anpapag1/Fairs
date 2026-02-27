@@ -114,7 +114,7 @@ export default function GroupDetailScreen({ route, navigation }) {
       {/* Header */}
       <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
         <TouchableOpacity
-          style={styles.backButton}
+          style={[styles.backButton, { backgroundColor: theme.accent }]}
           onPress={() => navigation.goBack()}
           activeOpacity={0.8}
         >
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: ACCENT,
+    paddingRight: 2,
   },
   headerTitle: {
     flex: 1,
