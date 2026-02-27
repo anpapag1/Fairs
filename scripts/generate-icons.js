@@ -20,7 +20,15 @@ async function generate(outputName, canvasSize, logoScale) {
   const logoSize = Math.round(canvasSize * logoScale);
   const offset   = Math.round((canvasSize - logoSize) / 2);
 
-  const resized = await sharp(svgBuffer)
+  // Render SVG at high resolution first, then trim transparent whitespace,
+  // then resize to target — this removes Illustrator's empty viewBox padding
+  const trimmed = await sharp(svgBuffer)
+    .resize(1024, 1024, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .png()
+    .toBuffer()
+    .then(buf => sharp(buf).trim({ threshold: 1 }).toBuffer());
+
+  const resized = await sharp(trimmed)
     .resize(logoSize, logoSize, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .png()
     .toBuffer();
@@ -44,11 +52,11 @@ async function generate(outputName, canvasSize, logoScale) {
   // icon.png — full bleed is fine for the square launcher icon
   await generate('icon.png',          1024, 1.0);
 
-  // adaptive-icon.png — 62% gives a fuller logo while staying inside the squircle safe zone
-  await generate('adaptive-icon.png', 1024, 0.62);
+  // adaptive-icon.png — 70% of canvas after trim = good fill inside squircle safe zone
+  await generate('adaptive-icon.png', 1024, 0.70);
 
-  // splash-icon.png — 95%: Android 12 splash API constrains icon to 288dp, fill it fully
-  await generate('splash-icon.png',   1024, 0.95);
+  // splash-icon.png — 90%: fills the Android 12 288dp icon box as much as possible
+  await generate('splash-icon.png',   1024, 0.90);
 
   // favicon
   await generate('favicon.png',         48, 1.0);

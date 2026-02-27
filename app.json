@@ -11,7 +11,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#B953D3"
+      "backgroundColor": "#b953d3"
     },
     "ios": {
       "supportsTablet": true
@@ -20,7 +20,7 @@
       "package": "com.fairs.app",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#B953D3"
+        "backgroundColor": "#b953d3"
       },
       "edgeToEdgeEnabled": true
     },
@@ -33,7 +33,8 @@
       }
     },
     "plugins": [
-      "expo-font"
+      "expo-font",
+      "./plugins/withJdk21"
     ]
   }
 }
