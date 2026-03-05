@@ -301,11 +301,11 @@ export default function GroupsScreen({ navigation }) {
         data={filteredGroups}
         renderItem={renderGroup}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContainer}
+        contentContainerStyle={[styles.listContainer, { paddingBottom: insets.bottom + 90 }]}
       />
 
       <TouchableOpacity
-        style={styles.addButton}
+        style={[styles.addButton, {backgroundColor: theme.accent, bottom: insets.bottom + 16 }]}
         onPress={() => setModalVisible(true)}
         activeOpacity={0.85}
       >
@@ -562,7 +562,6 @@ const styles = StyleSheet.create({
   // ── List ────────────────────────────────────────────────
   listContainer: {
     paddingHorizontal: 16,
-    paddingBottom: 140,
     gap: 12,
   },
   swipeableContainer: {},
@@ -571,7 +570,6 @@ const styles = StyleSheet.create({
   groupItem: {
     borderRadius: 20,
     padding: 18,
-    overflow: 'hidden',
   },
   groupMainRow: {
     flexDirection: 'row',
@@ -650,14 +648,8 @@ const styles = StyleSheet.create({
     right: 20,
     height: 58,
     borderRadius: 29,
-    backgroundColor: ACCENT,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: ACCENT,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.45,
-    shadowRadius: 14,
-    elevation: 10,
   },
   addButtonText: {
     fontFamily: 'Ysabeau-Bold',

@@ -556,8 +556,8 @@ export default function ItemsTab({ route }) {
                 onPress={() => closeFabThen(() => setScanSheetVisible(true))}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.miniFabLabel, { color: theme.textPrimary }]}>Scan Bill</Text>
-                <Ionicons name="receipt-outline" size={20} color={theme.textPrimary} />
+                <Text style={[styles.miniFabLabel, { color: theme.onPrimary }]}>Scan Bill</Text>
+                <Ionicons name="receipt-outline" size={20} color={theme.onPrimary} />
               </TouchableOpacity>
             </Animated.View>
 
@@ -574,8 +574,8 @@ export default function ItemsTab({ route }) {
                 onPress={() => closeFabThen(() => openTipModal())}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.miniFabLabel, { color: theme.textPrimary }]}>Tip</Text>
-                <Ionicons name="cash-outline" size={20} color={theme.textPrimary} />
+                <Text style={[styles.miniFabLabel, { color: theme.onPrimary }]}>Tip</Text>
+                <Ionicons name="cash-outline" size={20} color={theme.onPrimary} />
               </TouchableOpacity>
             </Animated.View>
 
